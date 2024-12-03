@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mysql-svc
+  name: mysql-svc
+  namespace: oasa-telemat
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+  selector:
+    app: mysql-svc
+  type: ClusterIP
