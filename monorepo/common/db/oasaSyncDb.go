@@ -7,6 +7,7 @@ import (
 	"time"
 
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
+
 	"github.com/joho/godotenv"
 
 	_ "github.com/go-sql-driver/mysql"

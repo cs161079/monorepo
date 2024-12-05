@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: oasa-server
+  name: oasa-server
+  namespace: oasa-telemat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oasa-server
+  template:
+    metadata:
+      labels:
+        app: oasa-server
+    spec:
+      containers:
+      - image: localhost:5000/exec_server:latest
+        name: oasa-server
+        ports:
+        - containerPort: 8081
+        envFrom:
+        - configMapRef:
+            name: enviroment-config
+      initContainers:
+        - name: wait-for-mysql-pod
+          image: busybox:1.28
+          args:
+            - /bin/sh
+            - -c
+            - until telnet mysql-svc 3306; do echo waiting for mysql-service; sleep 2; done;
+

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: enviroment-config
+  namespace: oasa-telemat
+data:
+  database.ip: mysql-svc
+  database.dbname: oasa-telemat
+  database.user: mysql-user
+  database.password: YourPassword$@

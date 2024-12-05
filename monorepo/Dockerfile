@@ -1,23 +1,24 @@
 FROM golang:1.20
 
 # Set Go environment variables
+# Set environment variables
 ENV GO111MODULE=on \
-    GOPROXY=https://proxy.golang.org,direct \
-    GOCACHE=/go/cache \
-    GOMODCACHE=/go/pkg/mod
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64 \
+    GOPROXY=direct
     
 WORKDIR /app
 
 RUN mkdir common api
 
-COPY common/* common/.
-COPY api/* api/.
+COPY common/ common/
+COPY api/ api/
 
-COPY go.mod .
+COPY go.sum go.sum
+COPY go.mod go.mod
 COPY main_api.go main.go
 COPY .env .
-
-RUN go mod tidy
 
 RUN go mod download
 
