@@ -17,7 +17,7 @@ COPY ../common/ common/
 
 COPY ../go.sum go.sum
 COPY ../go.mod go.mod
-COPY ../syncjob/main.go .
+COPY ../cronjob/main.go .
 COPY .env .
 
 RUN go mod download
