@@ -15,8 +15,10 @@ RUN mkdir common
 
 COPY ../common/ common/
 
-COPY ../go.sum go.sum
-COPY ../go.mod go.mod
+COPY ../go.sum .
+COPY ../go.mod .
+COPY ../cronjob/syncService.go .
+COPY ../cronjob/uVersionsRepository.go .
 COPY ../cronjob/main.go .
 COPY .env .
 
