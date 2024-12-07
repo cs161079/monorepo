@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: oasa-cronjob
+  namespace: oasa-telemat
+spec:
+  schedule: "*/5 * * * *"  # Run every 1 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: oasa-job-container
+            image: localhost:5000/oasa_job:latest
+            envFrom:
+            - configMapRef:
+                name: enviroment-config
+          restartPolicy: Never
+          initContainers:
+          - name: wait-for-mysql-pod
+            image: busybox:1.28
+            args:
+            - /bin/sh
+            - -c
+            - until telnet mysql-svc 3306; do echo waiting for mysql-service; sleep 2; done;

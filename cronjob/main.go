@@ -57,7 +57,9 @@ func worker(id int, connection *gorm.DB, wg *sync.WaitGroup) {
 	time.Sleep(10 * time.Second)
 }
 
-func main() {
+// Αυτό είναι ένα τεστ που είχα κάνει με Worker
+// Δεν θα το χρησιμοποιήσω.
+func main_worker() {
 	var wg sync.WaitGroup // Create a WaitGroup
 
 	emf, err := db.CreateConnection()
@@ -86,7 +88,7 @@ func main() {
 	fmt.Println("All workers done")
 }
 
-func main_main() {
+func main() {
 	logger.InitLogger("goSyncApplication")
 
 	// ********* Κάνουμε Create το connection Με την βάση δεδομένων **************
