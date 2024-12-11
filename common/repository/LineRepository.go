@@ -8,12 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewLineRepository(iConnection *gorm.DB) LineRepository {
-	return lineRepository{
-		DB: iConnection,
-	}
-}
-
 type lineRepository struct {
 	DB *gorm.DB
 }
@@ -26,6 +20,12 @@ type LineRepository interface {
 	LineList01() ([]models.Line, error)
 	DeleteAll() error
 	WithTx(*gorm.DB) lineRepository
+}
+
+func NewLineRepository(connection *gorm.DB) LineRepository {
+	return lineRepository{
+		DB: connection,
+	}
 }
 
 // withTx creates a new repository instance with the given transaction

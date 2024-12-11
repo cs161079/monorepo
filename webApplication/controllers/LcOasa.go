@@ -1,6 +1,7 @@
-package main
+package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,7 @@ func WebGetLines(c *gin.Context) {
 	// 	result := struct {
 	// 		Lines []models.Busline `json:"lines"`
 	// 	}{Lines: busLinesList}
+	c.Error(errors.New("this is a test error"))
 	c.IndentedJSON(http.StatusOK, "Its ola ok")
 }
 

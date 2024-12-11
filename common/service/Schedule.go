@@ -8,3 +8,9 @@ type ScheduleService interface {
 type scheduleService struct {
 	Repo repository.ScheduleRepository
 }
+
+func NewSheduleService(repo repository.ScheduleRepository) ScheduleService {
+	return scheduleService{
+		Repo: repo,
+	}
+}

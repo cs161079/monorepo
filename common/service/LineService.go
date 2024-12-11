@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"time"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
@@ -10,13 +9,6 @@ import (
 
 	"gorm.io/gorm"
 )
-
-func NewLineService(repo repository.LineRepository) LineService {
-	return lineService{
-		repo:   repo,
-		mapper: mapper.NewLineMapper(),
-	}
-}
 
 type LineService interface {
 	SelectByLineCode(lineCode int32) (*models.Line, error)
@@ -27,10 +19,18 @@ type LineService interface {
 	WithTrx(*gorm.DB) lineService
 	DeleteAll() error
 	GetMapper() mapper.LineMapper
+	GetLineList() ([]models.Line, error)
 }
 type lineService struct {
 	repo   repository.LineRepository
 	mapper mapper.LineMapper
+}
+
+func NewLineService(repo repository.LineRepository) LineService {
+	return lineService{
+		repo:   repo,
+		mapper: mapper.NewLineMapper(),
+	}
 }
 
 func (s lineService) GetMapper() mapper.LineMapper {
@@ -46,8 +46,11 @@ func (s lineService) InsertLine(line *models.Line) (*models.Line, error) {
 	return s.repo.Insert(line)
 }
 
+func (s lineService) GetLineList() ([]models.Line, error) {
+	return s.repo.LineList01()
+}
+
 func (s lineService) PostLine(line *models.Line) (*models.Line, error) {
-	time.Sleep(10 * time.Second)
 	var selectedLine *models.Line = nil
 	var err error = nil
 	selectedLine, err = s.repo.SelectByCode(line.Line_Code)

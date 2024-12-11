@@ -4,8 +4,6 @@ import (
 	"github.com/cs161079/monorepo/common/mapper"
 	models "github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
-
-	"gorm.io/gorm"
 )
 
 type UVersionService interface {
@@ -17,6 +15,12 @@ type uVersionsService struct {
 	Repo   repository.UVersionRepository
 	Rest   RestService
 	Mapper mapper.UversionMapper
+}
+
+func NewuVersionService(repo repository.UVersionRepository) UVersionService {
+	return uVersionsService{
+		Repo: repo,
+	}
 }
 
 func (s uVersionsService) GetUversionWeb() {
@@ -50,10 +54,4 @@ func (s uVersionsService) Post(entity *models.UVersions) error {
 
 func (s uVersionsService) Select(uVersion string) (*models.UVersions, error) {
 	return s.Repo.Select(uVersion)
-}
-
-func NewuVersionService(db *gorm.DB) UVersionService {
-	return uVersionsService{
-		Repo: repository.NewUversionRepository(db),
-	}
 }

@@ -14,6 +14,12 @@ type schedule01Repository struct {
 	DB *gorm.DB
 }
 
+func NewSchedule01Repository(connection *gorm.DB) Schedule01Repository {
+	return schedule01Repository{
+		DB: connection,
+	}
+}
+
 func (r schedule01Repository) SelectScheduleTime(lineCode int64, sdcCode int32) ([]models.Schedule01, error) {
 	//var selectedPtr *oasaSyncModel.Busline
 	var selectedVal []models.Schedule01

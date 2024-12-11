@@ -9,12 +9,18 @@ import (
 
 type ScheduleRepository interface {
 	SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.Schedule, error)
-	InsertScheduleMaster(input models.Schedule)
+	InsertScheduleMaster(input models.Schedule) error
 	DeleteScheduleMaster() error
 }
 
 type scheduleRepository struct {
 	DB *gorm.DB
+}
+
+func NewScheduleRepository(connection *gorm.DB) ScheduleRepository {
+	return scheduleRepository{
+		DB: connection,
+	}
 }
 
 func (r scheduleRepository) SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.Schedule, error) {

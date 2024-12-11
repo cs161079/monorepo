@@ -11,6 +11,12 @@ type sequenceService struct {
 	Repo repository.SequenceRepository
 }
 
+func NewSequenceService(repo repository.SequenceRepository) SequenceService {
+	return sequenceService{
+		Repo: repo,
+	}
+}
+
 func (s sequenceService) ZeroAllSequence() error {
 	selectedData, err := s.Repo.SequenceList01()
 	if err != nil {

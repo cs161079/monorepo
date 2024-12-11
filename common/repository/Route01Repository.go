@@ -16,6 +16,12 @@ type route01Repository struct {
 	DB *gorm.DB
 }
 
+func NewRoute01Repository(connection *gorm.DB) Route01Repository {
+	return route01Repository{
+		DB: connection,
+	}
+}
+
 func (r route01Repository) InsertRoute01Arr(entityArr []models.Route01) ([]models.Route01, error) {
 	res := r.DB.Table(db.ROUTEDETAILTABLE).Save(entityArr)
 	if res.Error != nil {
@@ -30,10 +36,4 @@ func (r route01Repository) Delete() error {
 		return err
 	}
 	return nil
-}
-
-func NewRoute01Repository(dbConnection *gorm.DB) Route01Repository {
-	return route01Repository{
-		DB: dbConnection,
-	}
 }

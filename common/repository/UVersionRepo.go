@@ -20,6 +20,10 @@ type uVersionRepository struct {
 	DB *gorm.DB
 }
 
+func NewUversionRepository(connection *gorm.DB) UVersionRepository {
+	return uVersionRepository{DB: connection}
+}
+
 // // withTx creates a new repository instance with the given transaction
 func (r uVersionRepository) WithTx(tx *gorm.DB) uVersionRepository {
 	if tx == nil {
@@ -57,8 +61,4 @@ func (r uVersionRepository) Select(uVersion string) (*models.UVersions, error) {
 		return nil, dbRes.Error
 	}
 	return &resultRec, nil
-}
-
-func NewUversionRepository(db *gorm.DB) UVersionRepository {
-	return uVersionRepository{DB: db}
 }

@@ -23,6 +23,12 @@ type route02Repository struct {
 	DB *gorm.DB
 }
 
+func NewRoute02Repository(connection *gorm.DB) Route02Repository {
+	return route02Repository{
+		DB: connection,
+	}
+}
+
 func (r route02Repository) SelectByCode(routecode int32, stopcode int64, senu int16) (*models.Route02, error) {
 	var result models.Route02
 	dbRes := r.DB.Table(db.ROUTESTOPSTABLE).
@@ -76,10 +82,4 @@ func (r route02Repository) InsertRoute02Arr(entityArr []models.Route02) error {
 		return res.Error
 	}
 	return nil
-}
-
-func NewRoute02Repository(dbConnection *gorm.DB) Route02Repository {
-	return route02Repository{
-		DB: dbConnection,
-	}
 }

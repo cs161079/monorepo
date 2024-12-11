@@ -30,6 +30,17 @@ type routeService struct {
 	mapper01 mapper.Route01Mapper
 }
 
+func NewRouteService(repo repository.RouteRepository,
+	repo01 repository.Route01Repository,
+	repo02 repository.Route02Repository, route01Mapper mapper.Route01Mapper) RouteService {
+	return routeService{
+		repo:     repo,
+		repo02:   repo02,
+		repo01:   repo01,
+		mapper01: route01Mapper,
+	}
+}
+
 func (s routeService) WithTrx(trxHandle *gorm.DB) routeService {
 	s.repo = s.repo.WithTx(trxHandle)
 	return s
@@ -105,13 +116,4 @@ func (s routeService) GetMapper01() mapper.Route01Mapper {
 
 func (s routeService) DeleteRoute01() error {
 	return s.repo01.Delete()
-}
-
-func NewRouteService(db *gorm.DB) RouteService {
-	return routeService{
-		repo:     repository.NewRouteRepository(db),
-		repo02:   repository.NewRoute02Repository(db),
-		repo01:   repository.NewRoute01Repository(db),
-		mapper01: mapper.NewRouteDetailMapper(),
-	}
 }

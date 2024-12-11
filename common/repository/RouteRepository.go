@@ -23,6 +23,12 @@ type routeRepository struct {
 	DB *gorm.DB
 }
 
+func NewRouteRepository(connection *gorm.DB) RouteRepository {
+	return routeRepository{
+		DB: connection,
+	}
+}
+
 func (r routeRepository) SelectByCode(routeCode int32) (*models.Route, error) {
 	var selectedVal models.Route
 	dbRes := r.DB.Table(db.ROUTETABLE).Where("route_code = ?", routeCode).Find(&selectedVal)
@@ -95,10 +101,4 @@ func (r routeRepository) InsertArray(entiryArr []models.Route) ([]models.Route, 
 		return nil, err
 	}
 	return entiryArr, nil
-}
-
-func NewRouteRepository(dbConnection *gorm.DB) RouteRepository {
-	return routeRepository{
-		DB: dbConnection,
-	}
 }

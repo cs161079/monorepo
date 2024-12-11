@@ -10,19 +10,9 @@ import (
 
 	"github.com/joho/godotenv"
 
-	_ "github.com/go-sql-driver/mysql"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
-
-// type Connection interface {
-// 	GetStatistics() (*sql.DBStats, error)
-// 	GetConnection() *connection
-// }
-
-// type connection struct {
-// 	DB *gorm.DB
-// }
 
 type Datasource interface {
 	DatasourceUrl() (string, error)
@@ -106,7 +96,7 @@ func createDataSource() (*datasource, error) {
 
 // This is core for DB
 
-func CreateConnection() (*gorm.DB, error) {
+func NewOpswConnection() (*gorm.DB, error) {
 	dataSource, err := createDataSource()
 	if err != nil {
 		return nil, err
