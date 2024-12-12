@@ -1,11 +1,26 @@
--- DELETE DATABASE IF EXISTS oasadb;
--- Create the database if it doesn't exist and not delete it if it exists and recreate it. Likewise with tables
--- CREATE DATABASE IF NOT EXISTS oasa-telemat;
-USE oasa-telemat;
+-- MySQL dump 10.13  Distrib 8.0.40, for Win64 (x86_64)
+--
+-- Host: localhost    Database: oasaTelemat
+-- ------------------------------------------------------
+-- Server version	8.0.40
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- DROP AND CREATE LINE TABLE
+-- Table structure for table `line`
 --
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE IF NOT EXISTS `line` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ml_code` int DEFAULT NULL,
@@ -17,11 +32,15 @@ CREATE TABLE IF NOT EXISTS `line` (
   `mld_master` smallint DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `LINE_CODE` (`line_code`)
-);
+) ENGINE=InnoDB AUTO_INCREMENT=456 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- DROP AND CREATE ROUTE TABLE
+-- Table structure for table `route`
 --
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE IF NOT EXISTS `route` (
   `id` int NOT NULL AUTO_INCREMENT,
   `route_code` int DEFAULT NULL,
@@ -33,15 +52,85 @@ CREATE TABLE IF NOT EXISTS `route` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `route_code_un` (`route_code`),
   KEY `line_code_indx` (`line_code`)
-);
+) ENGINE=InnoDB AUTO_INCREMENT=684 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- DROP AND CREATE STOP TABLE
+-- Table structure for table `route01`
 --
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `route01` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `route_code` int DEFAULT NULL,
+  `routed_x` decimal(10,7) DEFAULT NULL,
+  `routed_y` decimal(10,7) DEFAULT NULL,
+  `routed_order` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `route01_code_un` (`route_code`,`routed_order`)
+) ENGINE=InnoDB AUTO_INCREMENT=79464 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `route02`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `route02` (
+  `route_code` int NOT NULL,
+  `stop_code` int NOT NULL,
+  `senu` int NOT NULL,
+  PRIMARY KEY (`route_code`,`stop_code`,`senu`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `schedulemaster`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `schedulemaster` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `sdc_descr` varchar(50) DEFAULT NULL,
+  `sdc_descr_eng` varchar(500) DEFAULT NULL,
+  `sdc_code` int NOT NULL,
+  `line_code` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `LINE_SDC_CODE` (`line_code`,`sdc_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `scheduletime`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `scheduletime` (
+  `line_code` int NOT NULL,
+  `sdc_code` int NOT NULL,
+  `start_time` varchar(5) NOT NULL,
+  `type` int NOT NULL,
+  PRIMARY KEY (`line_code`,`sdc_code`,`start_time`,`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+
+--
+-- Table structure for table `stop`
+--
+
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE IF NOT EXISTS `stop` (
   `id` int NOT NULL AUTO_INCREMENT,
   `stop_code` int NOT NULL,
-  `stop_id` varchar(6) DEFAULT NULL,
+  `stop_id` varchar(10) DEFAULT NULL,
   `stop_descr` varchar(100) DEFAULT NULL,
   `stop_descr_eng` varchar(100) DEFAULT NULL,
   `stop_street` varchar(100) DEFAULT NULL,
@@ -51,56 +140,22 @@ CREATE TABLE IF NOT EXISTS `stop` (
   `stop_lng` decimal(10,7) DEFAULT NULL,
   `stop_type` int DEFAULT NULL,
   `stop_amea` int DEFAULT NULL,
+  `destinations` varchar(1000) DEFAULT NULL,
+  `destinations_eng` varchar(1000) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `stop_code_un` (`stop_code`)
-);
+) ENGINE=InnoDB AUTO_INCREMENT=16105 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- DROP AND CREATE ROUTESTOPS TABLE
+-- Table structure for table `syncversions`
 --
-CREATE TABLE IF NOT EXISTS `routestops` (
-  `route_code` int NOT NULL,
-  `stop_code` int NOT NULL,
-  `senu` int NOT NULL,
-  PRIMARY KEY (`route_code`,`stop_code`,`senu`)
-);
 
-CREATE TABLE IF NOT EXISTS `route01` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `route_code` int DEFAULT NULL,
-  `routed_x` decimal(10,7) DEFAULT NULL,
-  `routed_y` decimal(10,7) DEFAULT NULL,
-  `routed_order` int NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `route01_code_un` (`route_code`, `routed_order`)
-);
-
---
--- DROP AND CREATE SCHEDULEMASTER TABLE
---
-CREATE TABLE IF NOT EXISTS `schedulemaster` (
-  `id` int NOT NULL AUTO_INCREMENT,
-  `sdc_descr` varchar(50) DEFAULT NULL,
-  `sdc_descr_eng` varchar(500) DEFAULT NULL,
-  `sdc_code` int NOT NULL,
-  `line_code` int NOT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `LINE_SDC_CODE` (`line_code`,`sdc_code`)
-);
-
---
--- DROP AND CREATE SCHEDULETIME TABLE
---
-CREATE TABLE IF NOT EXISTS `scheduletime`(
-  `line_code` int NOT NULL,
-  `sdc_code` int NOT NULL,
-  `start_time` varchar(5) NOT NULL,
-  `type` int(1) NOT NULL,
-  PRIMARY KEY (`line_code`, `sdc_code`, `start_time`, `type`)
-);
-
-CREATE TABLE IF NOT EXISTS `syncversions`(
-    `uv_descr` varchar(20) NOT NULL,
-    `uv_lastupdatelong` int NOT NULL,
-    Primary Key(`uv_descr`)
-);
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE IF NOT EXISTS `syncversions` (
+  `uv_descr` varchar(20) NOT NULL,
+  `uv_lastupdatelong` int NOT NULL,
+  PRIMARY KEY (`uv_descr`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;

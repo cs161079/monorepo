@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/webApplication/main.go"
+            "program": "${workspaceFolder}/cronjob/main.go"
         }
     ]
 }
