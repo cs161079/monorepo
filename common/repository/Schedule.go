@@ -3,13 +3,17 @@ package repository
 import (
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
+	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 
 	"gorm.io/gorm"
 )
 
 type ScheduleRepository interface {
+	WithTx(tx *gorm.DB) scheduleRepository
+	DeleteAll() error
 	SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.Schedule, error)
 	InsertScheduleMaster(input models.Schedule) error
+	InsertScheduleMasterArray(input []models.Schedule) ([]models.Schedule, error)
 	DeleteScheduleMaster() error
 }
 
@@ -21,6 +25,23 @@ func NewScheduleRepository(connection *gorm.DB) ScheduleRepository {
 	return scheduleRepository{
 		DB: connection,
 	}
+}
+
+func (r scheduleRepository) DeleteAll() error {
+	if err := r.DB.Table(db.SCHEDULEMASTERTABLE).Where("1=1").Delete(&models.Schedule{}).Error; err != nil {
+		//trans.Rollback()
+		return err
+	}
+	return nil
+}
+
+func (r scheduleRepository) WithTx(tx *gorm.DB) scheduleRepository {
+	if tx == nil {
+		logger.WARN("Database Tranction not exist.")
+		return r
+	}
+	r.DB = tx
+	return r
 }
 
 func (r scheduleRepository) SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.Schedule, error) {
@@ -46,4 +67,12 @@ func (r scheduleRepository) DeleteScheduleMaster() error {
 		return err
 	}
 	return nil
+}
+
+func (r scheduleRepository) InsertScheduleMasterArray(input []models.Schedule) ([]models.Schedule, error) {
+	res := r.DB.Table(db.SCHEDULEMASTERTABLE).Save(input)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	return input, nil
 }

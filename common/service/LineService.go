@@ -14,8 +14,12 @@ type LineService interface {
 	SelectByLineCode(lineCode int32) (*models.Line, error)
 	InsertLine(line *models.Line) (*models.Line, error)
 	InsertArray([]models.Line) ([]models.Line, error)
+	InsertChunkArray(chunkSize int, allData []models.Line) error
+	InsertSchedulelineArray([]models.Scheduleline) ([]models.Scheduleline, error)
+	InsertChunkSchedulesArray(chunkSize int, allData []models.Scheduleline) error
 	PostLine(line *models.Line) (*models.Line, error)
 	PostLineArray(context.Context, []models.Line) ([]models.Line, error)
+	DeleteAllLineSchedules() error
 	WithTrx(*gorm.DB) lineService
 	DeleteAll() error
 	GetMapper() mapper.LineMapper
@@ -92,6 +96,79 @@ func (s lineService) DeleteAll() error {
 	return s.repo.DeleteAll()
 }
 
+func (s lineService) DeleteAllLineSchedules() error {
+	return s.repo.DeleteAllLineSchedules()
+}
+
 func (s lineService) InsertArray(entityArr []models.Line) ([]models.Line, error) {
 	return s.repo.InsertArray(entityArr)
+}
+
+func (s lineService) InsertChunkArray(chunkSize int, allData []models.Line) error {
+	// var maxSize = 1000
+	var stratIndex = 0
+	var endIndex = chunkSize
+	if chunkSize > len(allData) {
+		endIndex = len(allData) - 1
+	}
+	// txt := s.dbConnection.Begin()
+	for {
+		_, err := s.InsertArray(allData[stratIndex:endIndex])
+		if err != nil {
+			// txt.Rollback()
+			//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη των γραμμών από %d έως %d.", stratIndex, endIndex-1))
+			return err
+		}
+		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
+		stratIndex = endIndex
+		endIndex = stratIndex + chunkSize
+		if stratIndex > len(allData)-1 {
+			//logger.INFO("Η εισαγωγή γραμμών ολοκληρώθηκε.")
+			break
+		} else if endIndex > len(allData)-1 {
+			_, err := s.InsertArray(allData[stratIndex:])
+			if err != nil {
+				//txt.Rollback()
+				//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη των γραμμών από %d έως Τέλος.", stratIndex))
+				return err
+			}
+			break
+		}
+		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
+	}
+	return nil
+}
+
+func (s lineService) InsertSchedulelineArray(input []models.Scheduleline) ([]models.Scheduleline, error) {
+	return s.repo.InsertSchedulesForLine(input)
+}
+
+func (s lineService) InsertChunkSchedulesArray(chunkSize int, allData []models.Scheduleline) error {
+	// var maxSize = 1000
+	var stratIndex = 0
+	var endIndex = chunkSize
+	if chunkSize > len(allData) {
+		endIndex = len(allData) - 1
+	}
+	// txt := s.dbConnection.Begin()
+	for {
+		_, err := s.InsertSchedulelineArray(allData[stratIndex:endIndex])
+		if err != nil {
+			return err
+		}
+
+		stratIndex = endIndex
+		endIndex = stratIndex + chunkSize
+		if stratIndex > len(allData)-1 {
+			//logger.INFO("Η εισαγωγή γραμμών ολοκληρώθηκε.")
+			break
+		} else if endIndex > len(allData)-1 {
+			_, err := s.InsertSchedulelineArray(allData[stratIndex:])
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+	return nil
 }

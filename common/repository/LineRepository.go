@@ -20,6 +20,8 @@ type LineRepository interface {
 	LineList01() ([]models.Line, error)
 	DeleteAll() error
 	WithTx(*gorm.DB) lineRepository
+	InsertSchedulesForLine([]models.Scheduleline) ([]models.Scheduleline, error)
+	DeleteAllLineSchedules() error
 }
 
 func NewLineRepository(connection *gorm.DB) LineRepository {
@@ -36,6 +38,13 @@ func (r lineRepository) WithTx(tx *gorm.DB) lineRepository {
 	}
 	r.DB = tx
 	return r
+}
+
+func (r lineRepository) InsertSchedulesForLine(intput []models.Scheduleline) ([]models.Scheduleline, error) {
+	if err := r.DB.Table(db.SCHEDULELINE).Save(intput).Error; err != nil {
+		return nil, err
+	}
+	return intput, nil
 }
 
 func (r lineRepository) SelectByCode(lineCode int32) (*models.Line, error) {
@@ -65,7 +74,7 @@ func (r lineRepository) Update(line *models.Line) (*models.Line, error) {
 
 func (r lineRepository) LineList01() ([]models.Line, error) {
 	var result []models.Line
-	res := r.DB.Table(db.LINETABLE).Order("line_id, line_code").Find(&result)
+	res := r.DB.Table(db.LINETABLE).Where("mld_master=?", 1).Order("line_id, line_code").Find(&result)
 	if res != nil {
 		if res.Error != nil {
 			return nil, res.Error
@@ -76,6 +85,13 @@ func (r lineRepository) LineList01() ([]models.Line, error) {
 
 func (r lineRepository) DeleteAll() error {
 	if err := r.DB.Table(db.LINETABLE).Where("1=1").Delete(&models.Line{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r lineRepository) DeleteAllLineSchedules() error {
+	if err := r.DB.Table(db.SCHEDULELINE).Where("1=1").Delete(&models.Scheduleline{}).Error; err != nil {
 		return err
 	}
 	return nil

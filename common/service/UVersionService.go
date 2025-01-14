@@ -9,6 +9,7 @@ import (
 type UVersionService interface {
 	Select(string) (*models.UVersions, error)
 	Post(*models.UVersions) error
+	UVersionList() ([]models.UVersions, error)
 }
 
 type uVersionsService struct {
@@ -54,4 +55,8 @@ func (s uVersionsService) Post(entity *models.UVersions) error {
 
 func (s uVersionsService) Select(uVersion string) (*models.UVersions, error) {
 	return s.Repo.Select(uVersion)
+}
+
+func (s uVersionsService) UVersionList() ([]models.UVersions, error) {
+	return s.Repo.SelectAll()
 }

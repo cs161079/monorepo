@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -139,7 +138,7 @@ func (r restService) OasaRequestApi00(action string, extraParams map[string]inte
 	var oasaResult OasaResponse = OasaResponse{}
 	var extraparamUrl string = ""
 	for k := range extraParams {
-		extraparamUrl = extraparamUrl + "&" + k + "=" + strconv.FormatInt(extraParams[k].(int64), 10)
+		extraparamUrl = extraparamUrl + fmt.Sprintf("&%s=%v", k, extraParams[k])
 	}
 	var req OpswHttpRequest = OpswHttpRequest{
 		Method:   http.MethodGet,
@@ -178,6 +177,20 @@ func internalHttpRequest(req OpswHttpRequest) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// if transferEncoding := response.Header.Get("Transfer-Encoding"); transferEncoding == "" {
+	// 	// Create a map to hold the response body
+	// 	var result []map[string]any
+
+	// 	// Decode the JSON response body into the map
+	// 	err = json.NewDecoder(response.Body).Decode(&result)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	// if _, ok := result["error"]; ok {
+	// 	// 	return nil, fmt.Errorf("Http Error Response [%s]", result["error"])
+	// 	// }
+
+	// }
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
 		var returnedError = fmt.Errorf("AN ERROR OCCURED ANALYZE RESPONSE BODY. %s", err.Error())

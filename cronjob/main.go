@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -24,8 +25,6 @@ func getEnv(key string, defaultVal string) string {
 }
 
 func main() {
-	logger.InitLogger("goSyncApplication")
-
 	// ********* Κάνουμε Create το connection Με την βάση δεδομένων **************
 	// dbConnection, err := db.NewOpswConnection()
 	// if err != nil {
@@ -40,7 +39,7 @@ func main() {
 	// // ***************************************************************************
 	appPtr, err := config.BuildInRuntime()
 	if err != nil {
-		logger.ERROR(err.Error())
+		fmt.Print(err.Error())
 		return
 	}
 	appPtr.Boot()

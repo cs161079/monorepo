@@ -26,14 +26,15 @@ Struct for Bus Lines Entities for database
 ******************************************
 */
 type Line struct {
-	Id             int64  `json:"id" gorm:"primaryKey"`
-	Ml_Code        int16  `json:"ml_code"`
-	Sdc_Code       int16  `json:"sdc_code"`
-	Line_Code      int32  `json:"line_code" gorm:"index:LINE_CODE,unique"`
-	Line_Id        string `json:"line_id"`
-	Line_Descr     string `json:"line_descr"`
-	Line_Descr_Eng string `json:"line_descr_eng"`
-	Mld_master     int8   `json:"mld_master"`
+	Id             int64   `json:"id" gorm:"primaryKey"`
+	Ml_Code        int16   `json:"ml_code"`
+	Sdc_Code       int16   `json:"sdc_code"`
+	Line_Code      int32   `json:"line_code" gorm:"index:LINE_CODE,unique"`
+	Line_Id        string  `json:"line_id"`
+	Line_Descr     string  `json:"line_descr"`
+	Line_Descr_Eng string  `json:"line_descr_eng"`
+	Mld_master     int8    `json:"mld_master"`
+	Route          []Route `json:"routes" gorm:"foreignKey:Line_Code"`
 }
 
 /*
@@ -62,8 +63,7 @@ func (t LineArrDto) SortWithId() {
 	})
 }
 
-type LineDto02 struct {
-	Line_id     string
-	Route_Code  int32
-	Route_Descr string
+type Scheduleline struct {
+	Sdc_Code  int64 `json:"sdc_code" gorm:"priamaryKey"`
+	Line_Code int32 `json:"line_code" gorm:"priamaryKey"`
 }

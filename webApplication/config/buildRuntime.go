@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"github.com/cs161079/monorepo/common/repository"
 	"github.com/cs161079/monorepo/common/service"
 	"github.com/cs161079/monorepo/webApplication/controllers"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/dig"
 )
@@ -17,6 +18,7 @@ type App struct {
 
 func NewApp(lineCtrl controllers.LineControllerImplementation) *App {
 	eng := gin.Default()
+	eng.Use(cors.Default())
 	lineCtrl.AddRouters(eng)
 
 	return &App{
@@ -25,7 +27,7 @@ func NewApp(lineCtrl controllers.LineControllerImplementation) *App {
 }
 
 func (a App) Boot() {
-	a.engine.Run(":8080")
+	a.engine.Run(":8083")
 }
 
 func BuildInRuntime() (*App, error) {

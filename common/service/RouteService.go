@@ -14,9 +14,12 @@ type RouteService interface {
 	WithTrx(*gorm.DB) routeService
 	PostRoute02(models.Route02) (*models.Route02, error)
 	InsertArray([]models.Route) ([]models.Route, error)
+	InserChunkArray(chunSize int, allData []models.Route) error
 	Route02Insert(models.Route02) (*models.Route02, error)
 	Route02InsertArr([]models.Route02) ([]models.Route02, error)
+	Route02InsertChunkArray(chunkSize int, allData []models.Route02) error
 	Route01InsertArr([]models.Route01) ([]models.Route01, error)
+	Route01InsertChunkArray(chunkSize int, allData []models.Route01) error
 	DeleteRoute01() error
 	DeleteRoute02() error
 	List01() ([]models.Route, error)
@@ -98,8 +101,93 @@ func (s routeService) Route02InsertArr(entityArr []models.Route02) ([]models.Rou
 	return entityArr, nil
 }
 
+func (s routeService) Route02InsertChunkArray(chunkSize int, allData []models.Route02) error {
+	var stratIndex = 0
+	var endIndex = chunkSize
+	if chunkSize > len(allData) {
+		endIndex = len(allData) - 1
+	}
+	for {
+		_, err := s.Route02InsertArr(allData[stratIndex:endIndex])
+		if err != nil {
+			return err
+		}
+		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι διαδρομές από %d έως %d.", stratIndex, endIndex-1))
+		stratIndex = endIndex
+		endIndex = stratIndex + chunkSize
+		if stratIndex > len(allData)-1 {
+			break
+		} else if endIndex > len(allData)-1 {
+			_, err := s.Route02InsertArr(allData[stratIndex:])
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+	return nil
+}
+
 func (s routeService) InsertArray(entityArr []models.Route) ([]models.Route, error) {
 	return s.repo.InsertArray(entityArr)
+}
+
+func (s routeService) InserChunkArray(chunkSize int, allData []models.Route) error {
+	var stratIndex = 0
+	var endIndex = chunkSize
+	if chunkSize > len(allData) {
+		endIndex = len(allData) - 1
+	}
+	for {
+		_, err := s.InsertArray(allData[stratIndex:endIndex])
+		if err != nil {
+			return err
+		}
+		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι διαδρομές από %d έως %d.", stratIndex, endIndex-1))
+		stratIndex = endIndex
+		endIndex = stratIndex + chunkSize
+		if stratIndex > len(allData)-1 {
+			break
+		} else if endIndex > len(allData)-1 {
+			_, err := s.InsertArray(allData[stratIndex:])
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+	return nil
+}
+
+func (s routeService) Route01InsertChunkArray(chunkSize int, allData []models.Route01) error {
+	var stratIndex = 0
+	var endIndex = chunkSize
+	if chunkSize > len(allData) {
+		endIndex = len(allData) - 1
+	}
+
+	for {
+		_, err := s.Route01InsertArr(allData[stratIndex:endIndex])
+		if err != nil {
+			return err
+		}
+		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι λεπτομερειες διαδρομών από %d έως %d.", stratIndex, endIndex-1))
+		stratIndex = endIndex
+		endIndex = stratIndex + chunkSize
+		if stratIndex > len(allData)-1 {
+			//logger.INFO("Η εισαγωγή λεπτομερειών διαδρομών ολοκληρώθηκε.")
+			break
+		} else if endIndex > len(allData)-1 {
+			_, err := s.Route01InsertArr(allData[stratIndex:])
+			if err != nil {
+				//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη λεπτομερειών διαδρομών από %d έως τέλος.", stratIndex))
+				//txt.Rollback()
+				return err
+			}
+			break
+		}
+	}
+	return nil
 }
 
 func (s routeService) Route01InsertArr(entityArr []models.Route01) ([]models.Route01, error) {

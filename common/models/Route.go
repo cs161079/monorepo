@@ -12,6 +12,7 @@ type RouteOasa struct {
 	Route_Descr_Eng string  `json:"routeDescrEng" oasa:"RouteDescrEng"`
 	Route_Type      int8    `json:"routeType" oasa:"RouteType"`
 	Route_Distance  float32 `json:"routeDistance" oasa:"RouteDistance"`
+	Stop            []Stop  `gorm:"many2many:route02;foreignKey:Route_Code;joinForeignKey:Route_Code;References:Stop_code"`
 }
 
 /*

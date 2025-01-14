@@ -18,10 +18,43 @@ type GormLogger struct {
 }
 
 const (
-	rootLogsDirpath = "/logs"
+	rootLogsDirpath = "C:\\logs"
 )
 
+type OpswLogger struct {
+	logger *logger.Logger
+}
+
 var Logger *logger.Logger
+
+func CreateLogger() OpswLogger {
+	var applicationName = "goSyncApplication"
+	var topicLogger = &logger.Logger{
+		Out:   os.Stderr,
+		Level: logger.InfoLevel,
+		Formatter: &easy.Formatter{
+			TimestampFormat: "2006-01-02 15:04:05",
+			LogFormat:       "%time%  %lvl% --- %msg%",
+		},
+	}
+	directoryPath := filepath.Join(rootLogsDirpath, applicationName)
+	err := os.Mkdir(directoryPath, 0777)
+	if err != nil {
+		fmt.Printf("error create directory file: %v\n", err)
+	}
+	fmt.Println("Folder create succefully for logs....")
+	var runMode = os.Getenv("application.mode")
+	if runMode == "PROD" {
+		fileName := filepath.Join(rootLogsDirpath, applicationName, "oasaLogs.log")
+		//open a file
+		f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+		if err != nil {
+			fmt.Printf("error opening file: %v\n", err)
+		}
+		topicLogger.SetOutput(f)
+	}
+	return OpswLogger{logger: topicLogger}
+}
 
 func InitLogger(applicationName string) {
 	Logger = &logger.Logger{
@@ -29,7 +62,7 @@ func InitLogger(applicationName string) {
 		Level: logger.InfoLevel,
 		Formatter: &easy.Formatter{
 			TimestampFormat: "2006-01-02 15:04:05",
-			LogFormat:       "[%lvl%]: %time% - %msg%",
+			LogFormat:       "%time%  %lvl% --- %msg%",
 		},
 	}
 	directoryPath := filepath.Join(rootLogsDirpath, applicationName)
@@ -49,6 +82,19 @@ func InitLogger(applicationName string) {
 		Logger.SetOutput(f)
 	}
 
+}
+func (*OpswLogger) INFO(str string) {
+	Logger.Println(fmt.Sprintf("%s\n", str))
+}
+
+func (*OpswLogger) WARN(str string) {
+	Logger.SetLevel(logger.DebugLevel)
+	Logger.Warn(fmt.Sprintf("%s\n", str))
+}
+
+func (*OpswLogger) ERROR(str string) {
+	Logger.SetLevel(logger.ErrorLevel)
+	Logger.Error(fmt.Sprintf("%s\n", str))
 }
 
 func INFO(str string) {
