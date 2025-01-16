@@ -53,7 +53,7 @@ func CreateLogger() OpswLogger {
 		}
 		topicLogger.SetOutput(f)
 	}
-	return OpswLogger{Log: topicLogger}
+	return OpswLogger{logger: topicLogger}
 }
 
 func InitLogger(applicationName string) {
