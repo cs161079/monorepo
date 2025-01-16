@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/mapper"
@@ -28,33 +27,33 @@ func NewApp(logger logger.OpswLogger, syncSrv SyncService) *App {
 
 func (a App) Boot() {
 	if err := a.syncService.SyncData(); err != nil {
-		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δεδομένων. %s", err.Error()))
+		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δεδομένων. %s\n", err.Error()))
 		// fmt.Printf("Κάτι πήγε στραβά με την λήψη των δεδομένων.")
 		return
 	}
 	if err := a.syncService.DeleteAll(); err != nil {
-		a.logger.INFO(fmt.Sprintf("Κάτι πήγε στραβά με την διαγραφή των δεδομένων από την βάση δεδομένων. %s", err.Error()))
+		a.logger.INFO(fmt.Sprintf("Κάτι πήγε στραβά με την διαγραφή των δεδομένων από την βάση δεδομένων. %s\n", err.Error()))
 		return
 	}
 	if err := a.syncService.InserttoDatabase(); err != nil {
-		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την εισαγωγή των δεδομένων στην βάση δεδομένων. %s", err.Error()))
+		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την εισαγωγή των δεδομένων στην βάση δεδομένων. %s\n", err.Error()))
 		return
 	}
 	if err := a.syncService.SyncSchedule(); err != nil {
-		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δρομολογίων. %s", err.Error()))
+		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δρομολογίων. %s\n", err.Error()))
 	}
 }
 
 func InitializeApplication() {
-	// Redirect fmt's output to a file
-	file, err := os.OpenFile(filepath.Join("C:\\logs", "goSyncApplication", "oasaLogs.log"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	// Load the .env file
+	err := godotenv.Load()
 	if err != nil {
-		fmt.Println("Error creating file:", err)
-		return
+		fmt.Println("Error loading .env file")
 	}
-	defer file.Close()
+	logger.InitLogger("goSyncApplication")
+	originalStdout := os.Stdout
 
-	os.Stdout = file // Set output destination
+	os.Stdout = logger.Logger.Out.(*os.File) // Set output destination
 
 	fmt.Printf(`
   .    ___    _    ____    _    __ _ _  
@@ -67,13 +66,8 @@ func InitializeApplication() {
 
 :: OASA Synchtonization Data application (v1.0.0) ::
 
-				   `)
-	// Load the .env file
-	err = godotenv.Load()
-	if err != nil {
-		fmt.Println("Error loading .env file")
-	}
-	logger.InitLogger("goSyncApplication")
+`)
+	os.Stdout = originalStdout
 }
 
 func BuildInRuntime() (*App, error) {

@@ -14,6 +14,7 @@ import (
 	"github.com/go-errors/errors"
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
+	"gorm.io/gorm"
 )
 
 type App struct {
@@ -42,7 +43,7 @@ func ErrorHandler(c *gin.Context, err any) {
 	c.AbortWithStatusJSON(500, httpResponse)
 }
 
-func NewApp(lineCtrl controllers.LineControllerImplementation) *App {
+func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	eng.Use(cors.Default())

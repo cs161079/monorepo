@@ -2,29 +2,23 @@ package main
 
 import (
 	"fmt"
-	"os"
+	"log"
 
 	"github.com/cs161079/monorepo/common/db"
-	"github.com/cs161079/monorepo/common/models"
-	"github.com/cs161079/monorepo/common/repository"
-	"github.com/cs161079/monorepo/common/service"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 	"github.com/joho/godotenv"
 )
 
-func initEnviroment() {
-	// loads values from .env into the system
-	if err := godotenv.Load(".env"); err != nil {
-		logger.ERROR("No .env file found")
-	}
+type User struct {
+	ID     uint `gorm:"primaryKey"`
+	Name   string
+	Orders []Order `gorm:"foreignKey:UserID"` // Correctly establishes the relationship
 }
 
-func getEnv(key string, defaultVal string) string {
-	if value, exists := os.LookupEnv(key); exists {
-		return value
-	}
-
-	return defaultVal
+type Order struct {
+	ID     uint `gorm:"primaryKey"`
+	Amount float64
+	UserID uint // Foreign key that references User
 }
 
 func main() {
@@ -34,7 +28,7 @@ func main() {
 		fmt.Printf("Error loading .env file")
 		return
 	}
-	logger.InitLogger("goSyncApplication")
+	logger.InitLogger("goTestApplication")
 
 	dbConnection, err := db.NewOpswConnection()
 	if err != nil {
@@ -42,20 +36,34 @@ func main() {
 		return
 	}
 
-	var scheduleServ = service.NewShedule01Service(repository.NewSchedule01Repository(dbConnection))
+	if err := dbConnection.AutoMigrate(&User{}, &Order{}); err != nil {
+		logger.ERROR(fmt.Sprintf("Migration failed: %v", err))
+	}
 
-	var inRecord models.Scheduletime = models.Scheduletime{
-		Sdc_Code:   54,
-		Line_Code:  1375,
-		Start_time: models.NewCustomTime(13, 20),
-		End_time:   models.NewCustomTime(14, 10),
-		Sort:       1,
-		Direction:  models.Direction_GO,
+	// Create sample data
+	dbConnection.Create(&User{
+		Name: "Alice",
+		Orders: []Order{
+			{Amount: 100},
+			{Amount: 200},
+		},
+	})
+
+	// Create sample data
+	dbConnection.Create(&User{
+		Name: "Nikos",
+		Orders: []Order{
+			{Amount: 15},
+			{Amount: 45},
+		},
+	})
+
+	// Query User with Orders
+	var user User
+	if err := dbConnection.Preload("Orders").First(&user, "id=?", 1).Error; err != nil {
+		logger.ERROR(fmt.Sprintf("Query failed: %v", err))
 	}
-	if _, err := scheduleServ.Insert(inRecord); err != nil {
-		logger.ERROR(err.Error())
-		return
-	}
-	logger.INFO("Προστέθηκε με επιτυχία.")
+
+	log.Printf("User: %+v", user)
 
 }

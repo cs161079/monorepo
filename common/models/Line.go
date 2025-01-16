@@ -29,12 +29,16 @@ type Line struct {
 	Id             int64   `json:"id" gorm:"primaryKey"`
 	Ml_Code        int16   `json:"ml_code"`
 	Sdc_Code       int16   `json:"sdc_code"`
-	Line_Code      int32   `json:"line_code" gorm:"index:LINE_CODE,unique"`
+	Line_Code      int32   `json:"line_code" gorm:"index:Line_Code,unique"`
 	Line_Id        string  `json:"line_id"`
 	Line_Descr     string  `json:"line_descr"`
 	Line_Descr_Eng string  `json:"line_descr_eng"`
 	Mld_master     int8    `json:"mld_master"`
-	Route          []Route `json:"routes" gorm:"foreignKey:Line_Code"`
+	Routes         []Route `json:"routes" gorm:"foreignKey:Ln_Code;references:line_code"`
+}
+
+func (Line) TableName() string {
+	return "Line"
 }
 
 /*
@@ -64,6 +68,6 @@ func (t LineArrDto) SortWithId() {
 }
 
 type Scheduleline struct {
-	Sdc_Code  int64 `json:"sdc_code" gorm:"priamaryKey"`
-	Line_Code int32 `json:"line_code" gorm:"priamaryKey"`
+	Sdc_Cd  int64 `json:"sdc_code" gorm:"priamaryKey"`
+	Ln_Code int32 `json:"line_code" gorm:"priamaryKey"`
 }

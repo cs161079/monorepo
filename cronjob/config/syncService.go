@@ -452,7 +452,7 @@ func (s *syncService) syncRoutes() error {
 		if err != nil {
 			return err
 		}
-		rt.Line_Code = *num
+		rt.Ln_Code = *num
 		num, err = utils.StrToInt32(recordArr[0])
 		if err != nil {
 			return err
@@ -634,13 +634,13 @@ func (s *syncService) syncRouteStops() error {
 		if err != nil {
 			return err
 		}
-		rt.Route_code = *num32
-		if _, ok := s.routeKeys[rt.Route_code]; ok {
+		rt.Rt_code = *num32
+		if _, ok := s.routeKeys[rt.Rt_code]; ok {
 			num64, err := utils.StrToInt64(row[2])
 			if err != nil {
 				return err
 			}
-			rt.Stop_code = *num64
+			rt.Stp_code = *num64
 			num16, err := utils.StrToInt16(row[3])
 			if err != nil {
 				return err
@@ -709,8 +709,8 @@ func (s *syncService) syncRouteDetails() error {
 		if err != nil {
 			return err
 		}
-		rt.Route_code = *num32
-		if _, ok := s.routeKeys[rt.Route_code]; ok {
+		rt.Rt_code = *num32
+		if _, ok := s.routeKeys[rt.Rt_code]; ok {
 			num16, err := utils.StrToInt16(row[2])
 			if err != nil {
 				return err
@@ -800,7 +800,7 @@ func (s *syncService) addScheduleInArray(currArr []interface{}, line_code int32,
 			s.scheduleMasterKey[int32(sched.Sdc_Code)] = int32(sched.Sdc_Code)
 			s.HelpSchedule = append(s.HelpSchedule, scheduleMapper.MapDtoToSchedule(sched))
 		}
-		s.HelpScheduleline = append(s.HelpScheduleline, models.Scheduleline{Sdc_Code: int64(sched.Sdc_Code), Line_Code: line_code})
+		s.HelpScheduleline = append(s.HelpScheduleline, models.Scheduleline{Sdc_Cd: int64(sched.Sdc_Code), Ln_Code: line_code})
 		// TODO: Εδώ πρέπει να φέρνουμε για κάθε συνδιασμό line_code, ml_code για κάθε sdc_code
 		response := s.restService.OasaRequestApi00("getSchedLines", map[string]interface{}{
 			"p1": ml_code,

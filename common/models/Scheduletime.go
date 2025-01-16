@@ -60,8 +60,8 @@ type Scheduletime01Dto struct {
 }
 
 type Scheduletime struct {
-	Sdc_Code   opswInt32 `json:"sdc_code" gorm:"primaryKey"`
-	Line_Code  opswInt32 `json:"line_code" gorm:"primaryKey"`
+	Sdc_Cd     opswInt32 `json:"sdc_code" gorm:"primaryKey"`
+	Ln_Code    opswInt32 `json:"line_code" gorm:"primaryKey"`
 	Start_time opswTime  `json:"start_time" gorm:"primaryKey"`
 	End_time   opswTime  `json:"end_time"`
 	Sort       opswInt32 `json:"sort"`

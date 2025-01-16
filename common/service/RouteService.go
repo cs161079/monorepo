@@ -66,7 +66,7 @@ func (s routeService) DeleteAll() error {
 }
 
 func (s routeService) PostRoute02(entity models.Route02) (*models.Route02, error) {
-	foundRoute02, err := s.repo02.SelectByCode(entity.Route_code, entity.Stop_code, entity.Senu)
+	foundRoute02, err := s.repo02.SelectByCode(entity.Rt_code, entity.Stp_code, entity.Senu)
 	if err != nil {
 		return nil, err
 	}

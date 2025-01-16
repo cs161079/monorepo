@@ -21,13 +21,17 @@ Struct for Bus Lines Entities for database
 ******************************************
 */
 type Route struct {
-	Id              int64   `json:"Id" gorm:"PrimaryKey"`
-	Route_Code      int32   `json:"route_code" gorm:"index:ROUTE_CODE_UN,unique" oasa:"RouteCode"`
-	Line_Code       int32   `json:"line_code" gorm:"index:LINE_CODE_INDX" oasa:"LineCode"`
-	Route_Descr     string  `json:"route_descr" oasa:"RouteDescr"`
-	Route_Descr_eng string  `json:"route_descr_eng" oasa:"RouteDescrEng"`
-	Route_Type      int8    `json:"route_type" oasa:"RouteType"`
-	Route_Distance  float32 `json:"route_distance" oasa:"RouteDistance"`
+	Id              int64   `json:"Id" gorm:"primaryKey"`
+	Route_Code      int32   `json:"route_code" gorm:"index:ROUTE_CODE_UN,unique"`
+	Ln_Code         int32   `json:"line_id"`
+	Route_Descr     string  `json:"route_descr"`
+	Route_Descr_eng string  `json:"route_descr_eng"`
+	Route_Type      int8    `json:"route_type"`
+	Route_Distance  float32 `json:"route_distance"`
+}
+
+func (Route) TableName() string {
+	return "Route"
 }
 
 /*

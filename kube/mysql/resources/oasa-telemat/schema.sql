@@ -46,14 +46,14 @@ CREATE TABLE IF NOT EXISTS `line` (
 CREATE TABLE IF NOT EXISTS `route` (
   `id` int NOT NULL AUTO_INCREMENT,
   `route_code` int DEFAULT NULL,
-  `line_code` int NOT NULL,
+  `ln_code` int NOT NULL,
   `route_descr` varchar(100) DEFAULT NULL,
   `route_descr_eng` varchar(100) DEFAULT NULL,
   `route_type` int DEFAULT NULL,
   `route_distance` decimal(7,2) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `route_code_un` (`route_code`),
-  FOREIGN KEY (`line_code`) REFERENCES `line` (`line_code`)
+  FOREIGN KEY (`ln_code`) REFERENCES `line` (`line_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=684 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -66,13 +66,13 @@ CREATE TABLE IF NOT EXISTS `route` (
 -- Αυτός είναι ο πίνακας που αποθηκεύουμε τις λεπτομερειές για την κάθες διαδρομή
 CREATE TABLE IF NOT EXISTS `route01` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `route_code` int DEFAULT NULL,
+  `rt_code` int DEFAULT NULL,
   `routed_x` decimal(10,7) DEFAULT NULL,
   `routed_y` decimal(10,7) DEFAULT NULL,
   `routed_order` int NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `route01_code_un` (`route_code`,`routed_order`),
-  FOREIGN KEY (`route_code`) REFERENCES `route` (`route_code`)
+  UNIQUE KEY `route01_code_un` (`rt_code`,`routed_order`),
+  FOREIGN KEY (`rt_code`) REFERENCES `route` (`route_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=79464 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -85,12 +85,12 @@ CREATE TABLE IF NOT EXISTS `route01` (
 /*!50503 SET character_set_client = utf8mb4 */;
 -- Αυτός είναι ο πίνακας που αποθηκεύουμε τις στάσεις ανα διαδρομή και σειρά Α/Α
 CREATE TABLE IF NOT EXISTS `route02` (
-  `route_code` int NOT NULL,
-  `stop_code` int NOT NULL,
+  `rt_code` int NOT NULL,
+  `stp_code` int NOT NULL,
   `senu` int NOT NULL,
-  PRIMARY KEY (`route_code`,`stop_code`,`senu`),
-  FOREIGN KEY (`route_code`) REFERENCES `route` (`route_code`),
-  FOREIGN KEY (`stop_code`) REFERENCES `stop` (`stop_code`)
+  PRIMARY KEY (`rt_code`,`stp_code`,`senu`),
+  FOREIGN KEY (`rt_code`) REFERENCES `route` (`route_code`),
+  FOREIGN KEY (`stp_code`) REFERENCES `stop` (`stop_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -118,23 +118,23 @@ CREATE TABLE IF NOT EXISTS `schedulemaster` (
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE IF NOT EXISTS `scheduletime` (
-  `line_code` int NOT NULL,
-  `sdc_code` int NOT NULL,
+  `ln_code` int NOT NULL,
+  `sdc_cd` int NOT NULL,
   `start_time` TIME NOT NULL,
   `end_time` TIME NOT NULL,
   `sort` int NOT NULL,
   `direction` int NOT NULL,
-  PRIMARY KEY (`line_code`,`sdc_code`,`start_time`,`direction`),
-  FOREIGN KEY (`sdc_code`) REFERENCES `schedulemaster` (`sdc_code`)
+  PRIMARY KEY (`ln_code`,`sdc_cd`,`start_time`,`direction`),
+  FOREIGN KEY (`sdc_cd`) REFERENCES `schedulemaster` (`sdc_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 CREATE TABLE IF NOT EXISTS `scheduleline` (
-  `line_code` int NOT NULL,
-  `sdc_code` int NOT NULL,
-  PRIMARY KEY (`line_code`,`sdc_code`),
-  FOREIGN KEY (`sdc_code`) REFERENCES `schedulemaster` (`sdc_code`),
-  FOREIGN KEY (`line_code`) REFERENCES `line` (`line_code`)
+  `ln_code` int NOT NULL,
+  `sdc_cd` int NOT NULL,
+  PRIMARY KEY (`ln_code`,`sdc_cd`),
+  FOREIGN KEY (`sdc_cd`) REFERENCES `schedulemaster` (`sdc_code`),
+  FOREIGN KEY (`ln_code`) REFERENCES `line` (`line_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
