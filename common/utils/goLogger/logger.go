@@ -40,9 +40,9 @@ func CreateLogger() OpswLogger {
 	directoryPath := filepath.Join(rootLogsDirpath, applicationName)
 	err := os.Mkdir(directoryPath, 0777)
 	if err != nil {
-		fmt.Printf("error create directory file: %v\n", err)
+		//fmt.Printf("error create directory file: %v\n", err)
 	}
-	fmt.Println("Folder create succefully for logs....")
+	//fmt.Println("Folder create succefully for logs....")
 	var runMode = os.Getenv("application.mode")
 	if runMode == "PROD" {
 		fileName := filepath.Join(rootLogsDirpath, applicationName, "oasaLogs.log")
@@ -53,7 +53,7 @@ func CreateLogger() OpswLogger {
 		}
 		topicLogger.SetOutput(f)
 	}
-	return OpswLogger{logger: topicLogger}
+	return OpswLogger{Log: topicLogger}
 }
 
 func InitLogger(applicationName string) {
@@ -68,9 +68,9 @@ func InitLogger(applicationName string) {
 	directoryPath := filepath.Join(rootLogsDirpath, applicationName)
 	err := os.Mkdir(directoryPath, 0777)
 	if err != nil {
-		fmt.Printf("error create directory file: %v\n", err)
+		//fmt.Printf("error create directory file: %v\n", err)
 	}
-	fmt.Println("Folder create succefully for logs....")
+	//fmt.Println("Folder create succefully for logs....")
 	var runMode = os.Getenv("application.mode")
 	if runMode == "PROD" {
 		fileName := filepath.Join(rootLogsDirpath, applicationName, "oasaLogs.log")
@@ -84,7 +84,7 @@ func InitLogger(applicationName string) {
 
 }
 func (*OpswLogger) INFO(str string) {
-	Logger.Println(fmt.Sprintf("%s\n", str))
+	Logger.Println(str)
 }
 
 func (*OpswLogger) WARN(str string) {
@@ -98,12 +98,12 @@ func (*OpswLogger) ERROR(str string) {
 }
 
 func INFO(str string) {
-	Logger.Println(fmt.Sprintf("%s\n", str))
+	Logger.Println(str)
 }
 
 func WARN(str string) {
 	Logger.SetLevel(logger.DebugLevel)
-	Logger.Warn(fmt.Sprintf("%s\n", str))
+	Logger.Warn(str)
 }
 
 func ERROR(str string) {
