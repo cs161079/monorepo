@@ -43,7 +43,8 @@ func ErrorHandler(c *gin.Context, err any) {
 	c.AbortWithStatusJSON(500, httpResponse)
 }
 
-func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation) *App {
+func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation,
+	testCtrl controllers.TestController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	eng.Use(cors.Default())
@@ -52,6 +53,7 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation) *App
 	eng.Use(gin.Logger(), gin.CustomRecovery(ErrorHandler))
 
 	lineCtrl.AddRouters(eng)
+	testCtrl.AddRoutes(eng)
 
 	return &App{
 		engine: eng,
@@ -115,6 +117,7 @@ func BuildInRuntime() (*App, error) {
 		service.NewStopService,
 		service.NewuVersionService,
 		controllers.NewLineController,
+		controllers.TestControllerConstructor,
 		NewApp,
 	}
 

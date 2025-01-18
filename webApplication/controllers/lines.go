@@ -95,7 +95,6 @@ func (u LineControllerImplementation) GetLineInfo02(ctx *gin.Context) {
 			panic(fmt.Sprintln("Database Error ", results.Error.Error()))
 		}
 	}
-
 	fmt.Printf("Query results [%d]", results.RowsAffected)
 	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": result})
 }
@@ -120,5 +119,6 @@ func (u LineControllerImplementation) AddRouters(eng *gin.Engine) {
 	apiGroup.GET("/list", u.GetLineList)
 	apiGroup.GET("/info", u.GetLineInfo)
 	apiGroup.GET("/info02", u.GetLineInfo02)
+
 	apiGroup.GET("/preload", u.LinePreload)
 }

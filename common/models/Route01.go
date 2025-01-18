@@ -16,4 +16,8 @@ type Route01 struct {
 	Routed_order int16   `json:"routed_order" gorm:"index:route01_code_un,unique"`
 }
 
+func (Route01) TableName() string {
+	return "Route01"
+}
+
 //**********************************************************

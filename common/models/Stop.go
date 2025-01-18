@@ -32,6 +32,10 @@ type Stop struct {
 	Destinations_Eng string  `json:"destinations_eng"`
 }
 
+func (Stop) TableName() string {
+	return "stop"
+}
+
 type StopDto struct {
 	Stop_code   int32   `json:"Stop_code"`
 	Stop_descr  string  `json:"stop_descr"`
