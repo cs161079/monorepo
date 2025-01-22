@@ -82,7 +82,7 @@ func (t TestControllerImpl) lineDetailsV1(ctx *gin.Context) {
 		return
 	}
 	var result models.Line
-	results := t.db.Preload("Routes.Route01s").Preload("Routes.Route02s.Stop").Where("line_code=?", code).Find(&result)
+	results := t.db.Preload("Routes").Preload("Schedules.SdcDetails").Where("line_code=?", code).Find(&result)
 	if results.RowsAffected == 0 {
 		results.Error = gorm.ErrRecordNotFound
 	}

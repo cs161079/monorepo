@@ -59,4 +59,9 @@ type Schedule struct {
 	Sdc_Descr     string    `json:"sdc_descr"`
 	Sdc_Descr_Eng string    `json:"sdc_descr_eng"`
 	Sdc_Code      opswInt32 `json:"sdc_code"`
+	// Times         []Scheduletime `json:"times" gorm:"foreignKey:Sdc_Cd;references:Sdc_Code"`
+}
+
+func (Schedule) TableName() string {
+	return "ScheduleMaster"
 }

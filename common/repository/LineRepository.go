@@ -17,7 +17,7 @@ type LineRepository interface {
 	Insert(line *models.Line) (*models.Line, error)
 	InsertArray([]models.Line) ([]models.Line, error)
 	Update(line *models.Line) (*models.Line, error)
-	LineList01() ([]models.Line, error)
+	LineList01() ([]models.LineDto01, error)
 	DeleteAll() error
 	WithTx(*gorm.DB) lineRepository
 	InsertSchedulesForLine([]models.Scheduleline) ([]models.Scheduleline, error)
@@ -72,9 +72,9 @@ func (r lineRepository) Update(line *models.Line) (*models.Line, error) {
 	return line, nil
 }
 
-func (r lineRepository) LineList01() ([]models.Line, error) {
-	var result []models.Line
-	res := r.DB.Table(db.LINETABLE).Where("mld_master=?", 1).Order("line_id, line_code").Find(&result)
+func (r lineRepository) LineList01() ([]models.LineDto01, error) {
+	var result []models.LineDto01
+	res := r.DB.Table(db.LINETABLE).Where("mld_master=?", 1).Order("line_id").Find(&result)
 	if res != nil {
 		if res.Error != nil {
 			return nil, res.Error

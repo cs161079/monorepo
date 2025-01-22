@@ -26,15 +26,25 @@ Struct for Bus Lines Entities for database
 ******************************************
 */
 type Line struct {
-	Id             int64   `json:"id" gorm:"primaryKey"`
-	Ml_Code        int16   `json:"ml_code"`
-	Sdc_Code       int16   `json:"sdc_code"`
-	Line_Code      int32   `json:"line_code" gorm:"index:Line_Code,unique"`
-	Line_Id        string  `json:"line_id"`
-	Line_Descr     string  `json:"line_descr"`
-	Line_Descr_Eng string  `json:"line_descr_eng"`
-	Mld_master     int8    `json:"mld_master"`
-	Routes         []Route `json:"routes" gorm:"foreignKey:Ln_Code;references:line_code"`
+	Id             int64          `json:"id" gorm:"primaryKey"`
+	Ml_Code        int16          `json:"ml_code"`
+	Sdc_Code       int16          `json:"sdc_code"`
+	Line_Code      int32          `json:"line_code" gorm:"index:Line_Code,unique"`
+	Line_Id        string         `json:"line_id"`
+	Line_Descr     string         `json:"line_descr"`
+	Line_Descr_Eng string         `json:"line_descr_eng"`
+	Mld_master     int8           `json:"mld_master"`
+	Routes         []Route        `json:"routes" gorm:"foreignKey:Ln_Code;references:line_code"`
+	Schedules      []Scheduleline `json:"schedules" gorm:"foreignKey:Ln_Code;references:line_code"`
+}
+
+type LineDto01 struct {
+	Ml_Code        int16  `json:"ml_code"`
+	Sdc_Code       int16  `json:"sdc_code"`
+	Line_Code      int32  `json:"line_code"`
+	Line_Id        string `json:"line_id"`
+	Line_Descr     string `json:"line_descr"`
+	Line_Descr_Eng string `json:"line_descr_eng"`
 }
 
 func (Line) TableName() string {
@@ -68,6 +78,11 @@ func (t LineArrDto) SortWithId() {
 }
 
 type Scheduleline struct {
-	Sdc_Cd  int64 `json:"sdc_code" gorm:"priamaryKey"`
-	Ln_Code int32 `json:"line_code" gorm:"priamaryKey"`
+	Sdc_Cd     int64    `json:"sdc_code" gorm:"priamaryKey"`
+	Ln_Code    int32    `json:"line_code" gorm:"priamaryKey"`
+	SdcDetails Schedule `json:"details" gorm:"foreignKey:Sdc_Code;references:Sdc_Cd"`
+}
+
+func (Scheduleline) TableName() string {
+	return "Scheduleline"
 }

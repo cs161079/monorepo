@@ -68,6 +68,10 @@ type Scheduletime struct {
 	Direction  int8      `json:"direction" gorm:"primaryKey"`
 }
 
+func (Scheduletime) TableName() string {
+	return "Scheduletime"
+}
+
 // Custom format for CustomTime
 const customTimeFormat = "15:04"
 
@@ -84,17 +88,19 @@ func (ct *opswTime) Scan(value interface{}) error {
 		return nil
 	}
 
-	valStr, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("failed to scan time: %v", value)
+	switch v := value.(type) {
+	case time.Time:
+		*ct = opswTime(v)
+	case []uint8:
+		// Parse TIME in HH:MM:SS format
+		parsedTime, err := time.Parse("15:04:05", string(v))
+		if err != nil {
+			return fmt.Errorf("cannot parse time: %v", err)
+		}
+		*ct = opswTime(parsedTime)
+	default:
+		return fmt.Errorf("unsupported type %T for opswTime", value)
 	}
-
-	parsedTime, err := time.Parse(customTimeFormat, valStr)
-	if err != nil {
-		return fmt.Errorf("failed to parse time: %v", err)
-	}
-
-	*ct = opswTime(parsedTime)
 	return nil
 }
 

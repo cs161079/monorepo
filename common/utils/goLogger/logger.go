@@ -28,7 +28,10 @@ type OpswLogger struct {
 var Logger *logger.Logger
 
 func CreateLogger() OpswLogger {
-	var applicationName = "goSyncApplication"
+	var applicationName = os.Getenv("application.name")
+	if applicationName == "" {
+		applicationName = "DefaultApplication"
+	}
 	var topicLogger = &logger.Logger{
 		Out:   os.Stderr,
 		Level: logger.InfoLevel,
@@ -37,7 +40,11 @@ func CreateLogger() OpswLogger {
 			LogFormat:       "%time%  %lvl% --- %msg%",
 		},
 	}
-	directoryPath := filepath.Join(rootLogsDirpath, applicationName)
+	var rootLogsPath = os.Getenv("application.logs.path")
+	if rootLogsPath == "" {
+		rootLogsPath = rootLogsDirpath
+	}
+	directoryPath := filepath.Join(rootLogsPath, applicationName)
 	err := os.Mkdir(directoryPath, 0777)
 	if err != nil {
 		//fmt.Printf("error create directory file: %v\n", err)
@@ -45,7 +52,7 @@ func CreateLogger() OpswLogger {
 	//fmt.Println("Folder create succefully for logs....")
 	var runMode = os.Getenv("application.mode")
 	if runMode == "PROD" {
-		fileName := filepath.Join(rootLogsDirpath, applicationName, "oasaLogs.log")
+		fileName := filepath.Join(rootLogsPath, applicationName, "oasaLogs.log")
 		//open a file
 		f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
 		if err != nil {
@@ -57,32 +64,9 @@ func CreateLogger() OpswLogger {
 }
 
 func InitLogger(applicationName string) {
-	Logger = &logger.Logger{
-		Out:   os.Stderr,
-		Level: logger.InfoLevel,
-		Formatter: &easy.Formatter{
-			TimestampFormat: "2006-01-02 15:04:05",
-			LogFormat:       "%time%  %lvl% --- %msg%",
-		},
-	}
-	directoryPath := filepath.Join(rootLogsDirpath, applicationName)
-	err := os.Mkdir(directoryPath, 0777)
-	if err != nil {
-		//fmt.Printf("error create directory file: %v\n", err)
-	}
-	//fmt.Println("Folder create succefully for logs....")
-	var runMode = os.Getenv("application.mode")
-	if runMode == "PROD" {
-		fileName := filepath.Join(rootLogsDirpath, applicationName, "oasaLogs.log")
-		//open a file
-		f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-		if err != nil {
-			fmt.Printf("error opening file: %v\n", err)
-		}
-		Logger.SetOutput(f)
-	}
-
+	Logger = CreateLogger().logger
 }
+
 func (*OpswLogger) INFO(str string) {
 	Logger.Println(str)
 }

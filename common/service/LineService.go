@@ -23,7 +23,7 @@ type LineService interface {
 	WithTrx(*gorm.DB) lineService
 	DeleteAll() error
 	GetMapper() mapper.LineMapper
-	GetLineList() ([]models.Line, error)
+	GetLineList() ([]models.LineDto01, error)
 }
 type lineService struct {
 	repo   repository.LineRepository
@@ -50,7 +50,7 @@ func (s lineService) InsertLine(line *models.Line) (*models.Line, error) {
 	return s.repo.Insert(line)
 }
 
-func (s lineService) GetLineList() ([]models.Line, error) {
+func (s lineService) GetLineList() ([]models.LineDto01, error) {
 	return s.repo.LineList01()
 }
 
