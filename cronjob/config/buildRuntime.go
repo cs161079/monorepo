@@ -67,7 +67,7 @@ func InitializeApplication() {
             | |___| | | (_) | | | | |_| | (_) | |_) |      / ___ \| |_) | |_) | | | (_| (_| | |_| | (_) | | | |  ) ) ) )      
              \____|_|  \___/|_| |_|\___/ \___/|_.__/      /_/   \_\ .__/| .__/|_|_|\___\__,_|\__|_|\___/|_| |_| / / / /       
 														          |_|   |_|                                    /_/_/_/
-	:: OASA Synchtonization Data application (v%s) ::`, os.Getenv("application.version"))
+	:: OASA Synchtonization Data application (v%s) ::`+"\n", os.Getenv("application.version"))
 	os.Stdout = originalStdout
 }
 

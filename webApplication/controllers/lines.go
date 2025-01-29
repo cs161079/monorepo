@@ -29,6 +29,12 @@ func NewLineController(db *gorm.DB, svc service.LineService) LineControllerImple
 	}
 }
 
+func (u LineControllerImplementation) AddRouters(eng *gin.Engine) {
+	apiGroup := eng.Group("/lines")
+	apiGroup.GET("/list", u.GetLineList)
+	apiGroup.GET("/details", u.lineDetails)
+}
+
 func (u LineControllerImplementation) GetLineList(c *gin.Context) {
 	data, err := u.svc.GetLineList()
 	if err != nil {
@@ -62,10 +68,4 @@ func (t LineControllerImplementation) lineDetails(ctx *gin.Context) {
 	}
 	fmt.Printf("Query results [%d]", results.RowsAffected)
 	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": result})
-}
-
-func (u LineControllerImplementation) AddRouters(eng *gin.Engine) {
-	apiGroup := eng.Group("/lines")
-	apiGroup.GET("/list", u.GetLineList)
-	apiGroup.GET("/details", u.lineDetails)
 }

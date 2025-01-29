@@ -83,7 +83,7 @@ func (*OpswLogger) ERROR(str string) {
 }
 
 func INFO(str string) {
-	Logger.Println(str)
+	Logger.Print(fmt.Sprintf("%s\n", str))
 }
 
 func WARN(str string) {
