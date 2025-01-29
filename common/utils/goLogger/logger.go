@@ -60,6 +60,7 @@ func CreateLogger() OpswLogger {
 		}
 		topicLogger.SetOutput(f)
 	}
+	Logger = topicLogger
 	return OpswLogger{logger: topicLogger}
 }
 

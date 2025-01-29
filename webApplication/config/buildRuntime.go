@@ -61,7 +61,12 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation,
 }
 
 func (a App) Boot() {
-	a.engine.Run("0.0.0.0:8083")
+	var port = os.Getenv("SERVER_PORT")
+	if port == "" {
+		port = "8080"
+	}
+	logger.Logger.Info("Application server start on port %s", port)
+	a.engine.Run(fmt.Sprintf(":%s", port))
 }
 
 func InitializeApplication() {

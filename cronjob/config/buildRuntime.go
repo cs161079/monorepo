@@ -50,23 +50,24 @@ func InitializeApplication() {
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
-	logger.InitLogger("goSyncApplication")
+	logger.CreateLogger()
 	originalStdout := os.Stdout
 
 	os.Stdout = logger.Logger.Out.(*os.File) // Set output destination
 
 	fmt.Printf(`
-  .    ___    _    ____    _    __ _ _  
- /\\  / _ \  / \  / ___|  / \   \ \ \ \
-( ( )| | | |/ _ \ \___ \ / _ \   \ \ \ \ 
- \\/ | |_| / ___ \ ___) / ___ \   ) ) ) )  
-  '   \___/_/   \_\____/_/   \_\ / / / /
-						    	/_/_/_/
-
-
-:: OASA Synchtonization Data application (v1.0.0) ::
-
-`)
+  .    ___    _    ____    _      
+ /\\  / _ \  / \  / ___|  / \   
+( ( )| | | |/ _ \ \___ \ / _ \   
+ \\/ | |_| / ___ \ ___) / ___ \     
+  '   \___/_/   \_\____/_/   \_\ 		    	
+			  ____                     _       _                 											   __ _ _
+ 			 / ___|_ __ ___  _ __     | | ___ | |__          / \   _ __  _ __ | (_) ___ __ _| |_(_) ___  _ __  \ \ \ \   
+            | |   | '__/ _ \| '_ \ _  | |/ _ \| '_ \        / _ \ | '_ \| '_ \| | |/ __/ _  | __| |/ _ \| '_ \  \ \ \ \      
+            | |___| | | (_) | | | | |_| | (_) | |_) |      / ___ \| |_) | |_) | | | (_| (_| | |_| | (_) | | | |  ) ) ) )      
+             \____|_|  \___/|_| |_|\___/ \___/|_.__/      /_/   \_\ .__/| .__/|_|_|\___\__,_|\__|_|\___/|_| |_| / / / /       
+														          |_|   |_|                                    /_/_/_/
+	:: OASA Synchtonization Data application (v%s) ::`, os.Getenv("application.version"))
 	os.Stdout = originalStdout
 }
 
