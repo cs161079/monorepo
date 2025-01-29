@@ -19,7 +19,7 @@ spec:
       - image: localhost:5000/exec_server:latest
         name: oasa-server
         ports:
-        - containerPort: 8081
+        - containerPort: 8082
         envFrom:
         - configMapRef:
             name: enviroment-config
