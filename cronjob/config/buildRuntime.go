@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/mapper"
@@ -26,6 +27,7 @@ func NewApp(logger logger.OpswLogger, syncSrv SyncService) *App {
 }
 
 func (a App) Boot() {
+	start := time.Now()
 	if err := a.syncService.SyncData(); err != nil {
 		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δεδομένων. %s\n", err.Error()))
 		// fmt.Printf("Κάτι πήγε στραβά με την λήψη των δεδομένων.")
@@ -39,9 +41,11 @@ func (a App) Boot() {
 		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την εισαγωγή των δεδομένων στην βάση δεδομένων. %s\n", err.Error()))
 		return
 	}
-	if err := a.syncService.SyncSchedule(); err != nil {
-		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δρομολογίων. %s\n", err.Error()))
-	}
+	end := time.Now()
+	// Calculate the duration
+	duration := end.Sub(start)
+	// Output the duration
+	fmt.Printf("Duration: %v\n", duration)
 }
 
 func InitializeApplication() {
@@ -61,13 +65,13 @@ func InitializeApplication() {
 ( ( )| | | |/ _ \ \___ \ / _ \   
  \\/ | |_| / ___ \ ___) / ___ \     
   '   \___/_/   \_\____/_/   \_\ 		    	
-			  ____                     _       _                 											   __ _ _
- 			 / ___|_ __ ___  _ __     | | ___ | |__          / \   _ __  _ __ | (_) ___ __ _| |_(_) ___  _ __  \ \ \ \   
-            | |   | '__/ _ \| '_ \ _  | |/ _ \| '_ \        / _ \ | '_ \| '_ \| | |/ __/ _  | __| |/ _ \| '_ \  \ \ \ \      
-            | |___| | | (_) | | | | |_| | (_) | |_) |      / ___ \| |_) | |_) | | | (_| (_| | |_| | (_) | | | |  ) ) ) )      
-             \____|_|  \___/|_| |_|\___/ \___/|_.__/      /_/   \_\ .__/| .__/|_|_|\___\__,_|\__|_|\___/|_| |_| / / / /       
-														          |_|   |_|                                    /_/_/_/
-	:: OASA Synchtonization Data application (v%s) ::`+"\n", os.Getenv("application.version"))
+             ____                     _       _                                                                __ _ _
+            / ___|_ __ ___  _ __     | | ___ | |__           / \   _ __  _ __ | (_) ___ __ _| |_(_) ___  _ __  \ \ \ \
+            | |   | '__/ _ \| '_ \ _  | |/ _ \| '_ \        / _ \ | '_ \| '_ \| | |/ __/ _  | __| |/ _ \| '_ \  \ \ \ \
+            | |___| | | (_) | | | | |_| | (_) | |_) |      / ___ \| |_) | |_) | | | (_| (_| | |_| | (_) | | | |  ) ) ) )
+             \____|_|  \___/|_| |_|\___/ \___/|_.__/      /_/   \_\ .__/| .__/|_|_|\___\__,_|\__|_|\___/|_| |_| / / / / 
+                                                                  |_|   |_|                                    /_/_/_/
+	:: OASA Synchtonization Data application (v%s) ::`+"\n\n", os.Getenv("application.version"))
 	os.Stdout = originalStdout
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
@@ -57,7 +58,8 @@ type SyncService interface {
 	// =================================================================================================================
 	syncRouteStops() error
 
-	SyncSchedule() error
+	syncScheduleMaster() error
+	syncScheduleTime() error
 
 	syncRouteDetails() error
 	uVersionFromOasa() ([]dao.UVersion01, error)
@@ -67,14 +69,14 @@ type SyncService interface {
 }
 
 type syncService struct {
-	HelpLine          []models.Line
-	HelpRoute         []models.Route
-	HelpRoute01       []models.Route01
-	HelpRoute02       []models.Route02
-	HelpStop          []models.Stop
-	HelpSchedule      []models.Schedule
-	HelpScheduletime  []models.Scheduletime
-	HelpScheduleline  []models.Scheduleline
+	HelpLine         []models.Line
+	HelpRoute        []models.Route
+	HelpRoute01      []models.Route01
+	HelpRoute02      []models.Route02
+	HelpStop         []models.Stop
+	HelpSchedule     []models.Schedule
+	HelpScheduletime []models.Scheduletime
+	// HelpScheduleline  []models.Scheduleline
 	dbConnection      *gorm.DB
 	restService       service.RestService
 	lineService       service.LineService
@@ -85,8 +87,8 @@ type syncService struct {
 	schedule01Service service.Schedule01Service
 	// Εδώ κρατάμε τα κλειδιά των διαδρομών που έχουν συγχρονιστεί
 	// γιατί μου φέρνει Detail διαδρομών οι οποίες δεν υπάρχουν.
-	routeKeys         map[int32]int32
-	scheduleMasterKey map[int32]int32
+	routeKeys map[int32]int32
+	//scheduleMasterKey map[int32]int32
 }
 
 func NewSyncService(dbConnection *gorm.DB, restSrv service.RestService, lineSrv service.LineService,
@@ -102,7 +104,7 @@ func NewSyncService(dbConnection *gorm.DB, restSrv service.RestService, lineSrv 
 		schedule01Service: schedule01,
 		uVversionService:  uvVerSrv,
 		routeKeys:         make(map[int32]int32),
-		scheduleMasterKey: make(map[int32]int32),
+		//scheduleMasterKey: make(map[int32]int32),
 	}
 }
 
@@ -125,6 +127,8 @@ func FixRecordOrder(rec *dao.UVersion01) {
 		rec.Orderd = 4
 	} else if rec.UVersion.Uv_descr == "SCHED_CATS" {
 		rec.Orderd = 5
+	} else if rec.UVersion.Uv_descr == "SCHED_ENTRIES" {
+		rec.Orderd = 6
 	}
 }
 
@@ -190,15 +194,6 @@ func (s *syncService) InserttoDatabase() error {
 	}
 
 	txt = s.dbConnection.Begin()
-	if err := s.lineService.WithTrx(txt).InsertChunkSchedulesArray(10000, s.HelpScheduleline); err != nil {
-		return err
-	}
-	logger.INFO("Η εισαγωγή των δρομολογίων ανά γραμμή στην βάση δεδομένων ολοκληρώθηκε.")
-	if err := txt.Commit().Error; err != nil {
-		return err
-	}
-
-	txt = s.dbConnection.Begin()
 	if err := s.schedule01Service.WithTrx(txt).InsertSchedule01ChunkArray(10000, s.HelpScheduletime); err != nil {
 		return err
 	}
@@ -240,11 +235,6 @@ func (s *syncService) DeleteAll() error {
 		return err
 	}
 
-	if err := s.lineService.WithTrx(txt).DeleteAllLineSchedules(); err != nil {
-		txt.Rollback()
-		return err
-	}
-
 	// Διαγραφή ΔΡΟΜΟΛΟΓΙΩΝ
 	if err := s.scheduleService.WithTrx(txt).DeleteAll(); err != nil {
 		txt.Rollback()
@@ -280,6 +270,20 @@ func (s *syncService) uVersionFromOasa() ([]dao.UVersion01, error) {
 	return result, nil
 }
 
+/*
+filterRecords(records []models.UVersions, condition func(models.UVersions) bool) *models.UVersions
+filterRecords takes an Array of UVersion Recors and a function for condition and returns
+the records that satisfy the condition.
+
+Parameters:
+
+	records ([]models.UVersions): TAn Array of Data versions from OASA.
+	condition func (models.UVersions) bool: The second integer to add.
+
+Returns:
+
+	*models.UVersions: Pointer of record that satify the condition which take as parameter.
+*/
 func filterRecords(records []models.UVersions, condition func(models.UVersions) bool) *models.UVersions {
 	var result models.UVersions
 	for _, record := range records {
@@ -346,29 +350,23 @@ func (s *syncService) SyncData() error {
 				if err := s.syncRouteDetails(); err != nil {
 					return err
 				}
+			case "SCHED_CATS":
+				logger.INFO("Schedules be updated....")
+				if err := s.syncScheduleMaster(); err != nil {
+					return err
+				}
+			case "SCHED_ENTRIES":
+				// routeDetailMustUpdate = false
+				logger.INFO("Schedule details and times be updated....")
+				if err := s.syncScheduleTime(); err != nil {
+					return err
+				}
 			}
 
 		}
 	}
-	if err = s.SyncSchedule(); err != nil {
-		return err
-	}
 	return nil
-
 }
-
-// func writeResponseToFile(filename string, content []string) {
-// 	file, err := os.Create(filename)
-// 	if err != nil {
-// 		logger.ERROR(err.Error())
-// 		return
-// 	}
-// 	// file := utils.NewOpswfile("SCHED_ENTRIES.txt")
-// 	defer file.Close()
-// 	for _, sched := range content {
-// 		file.WriteString(fmt.Sprintf("%s\n", sched))
-// 	}
-// }
 
 func (s *syncService) syncLines() error {
 	// *********** Κάνουμε get το connection της  βάσης από το Context ************
@@ -383,12 +381,6 @@ func (s *syncService) syncLines() error {
 		return response.Error
 	}
 	// TODO: Το έκοψα γιατί δεν θα κάνω εδώ το Delete
-	// txt := s.dbConnection.Begin()
-	// if err := lineSrv.WithTrx(txt).DeleteAll(); err != nil {
-	// 	txt.Rollback()
-	// }
-	// logger.INFO("Delete all data from Line table in database succesfully.")
-	// var lineArray []models.Line = make([]models.Line, 0)
 	logger.INFO("Get Route data from OASA Server...")
 	s.HelpLine = make([]models.Line, 0)
 	logger.INFO("Get line data from OASA Server...")
@@ -403,16 +395,6 @@ func (s *syncService) syncLines() error {
 	}
 
 	// TODO: Δεν θα κάνουμε εδώ Insert στην βάση.
-	// if len(lineArray) > 0 {
-	// 	_, err := lineSrv.WithTrx(txt).InsertArray(lineArray)
-	// 	if err != nil {
-	// 		txt.Rollback()
-	// 		return err
-	// 	}
-	// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(lineArray)))
-	// }
-
-	// txt.Commit()
 	logger.INFO("Finished sychronize data from OASA Server.")
 	return nil
 }
@@ -430,13 +412,6 @@ func (s *syncService) syncRoutes() error {
 	}
 
 	// TODO: Δεν θα κάνουμε εδώ Delete από τον πίνακα
-	// tx := s.dbConnection.Begin()
-
-	// err := routeSrv.WithTrx(tx).DeleteAll()
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
 	// Δεν θα χρησιμοποιήσουμε τοπικό πίνακα
 	// var routeArray []models.Route = make([]models.Route, 0)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
@@ -476,28 +451,8 @@ func (s *syncService) syncRoutes() error {
 		//logger.INFO(fmt.Sprintf("Η διαδρομή [routr %d, line %d] προστεθηκε", rt.Route_Code, rt.Line_Code))
 
 		// TODO: Αλλαγή
-		// if len(routeArray) == 10000 {
-		// 	// Εδώ Θα καλούμε την Insert για να κάνουμε εγγραφή στην βάση
-		// 	_, err = routeSrv.WithTrx(tx).InsertArray(routeArray)
-		// 	if err != nil {
-		// 		tx.Rollback()
-		// 		return err
-		// 	}
-		// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(routeArray)))
-		// }
 
 	}
-
-	// if len(routeArray) > 0 {
-	// 	// Εδώ Θα καλούμε την Insert για να κάνουμε εγγραφή στην βάση
-	// 	_, err = routeSrv.WithTrx(tx).InsertArray(routeArray)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		return err
-	// 	}
-	// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(routeArray)))
-	// }
-	// tx.Commit()
 
 	return nil
 }
@@ -515,16 +470,7 @@ func (s *syncService) syncStops() error {
 	}
 
 	//TODO: Δεν θα κάνουμε διαγραφή
-	// tx := s.dbConnection.Begin()
 
-	// err := stopSrv.WithTrx(tx).DeleteAll()
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
-	// logger.INFO("Η διαγραφή των στάσεων έγινε με επιτυχία.")
-
-	// var stopArr []models.Stop = make([]models.Stop, 0)
 	s.HelpStop = make([]models.Stop, 0)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
 	logger.INFO("Get Stop data from OASA Server...")
@@ -569,31 +515,9 @@ func (s *syncService) syncStops() error {
 		s.HelpStop = append(s.HelpStop, st)
 
 		// TODO: Αλλαγή δεν θα γίνετα
-		// if len(stopArr) == 1000 {
-		// 	// Εδώ Θα καλούμε την Insert για να κάνουμε εγγραφή στην βάση
-		// 	_, err = stopSrv.WithTrx(tx).InsertArray(stopArr)
-		// 	if err != nil {
-		// 		tx.Rollback()
-		// 		return err
-		// 	}
-		// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(stopArr)))
-		// 	stopArr = make([]models.Stop, 0)
-		// }
 
 	}
 	logger.INFO("Finished sycronization from OASA Server...")
-
-	// if len(stopArr) > 0 {
-	// 	// Εδώ Θα καλούμε την Insert για να κάνουμε εγγραφή στην βάση
-	// 	_, err = stopSrv.WithTrx(tx).InsertArray(stopArr)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		return err
-	// 	}
-	// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(stopArr)))
-	// }
-
-	// tx.Commit()
 
 	return nil
 }
@@ -613,14 +537,6 @@ func (s *syncService) syncRouteStops() error {
 	}
 
 	// TODO: Δεν θα γίνεται
-	// tx := s.dbConnection.Begin()
-	// err := routeSrv.WithTrx(tx).DeleteRoute02()
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
-	// logger.INFO("Delete from Route02 Table succesfully.")
-	// var route02Arr []models.Route02 = make([]models.Route02, 0)
 	s.HelpRoute02 = make([]models.Route02, 0)
 	logger.INFO("Get Stops per Route data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
@@ -648,26 +564,7 @@ func (s *syncService) syncRouteStops() error {
 			rt.Senu = *num16
 			s.HelpRoute02 = append(s.HelpRoute02, rt)
 		}
-
-		// if len(route02Arr) == 10000 {
-		// 	_, err = routeSrv.WithTrx(tx).Route02InsertArr(route02Arr)
-		// 	if err != nil {
-		// 		tx.Rollback()
-		// 		return err
-		// 	}
-		// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(route02Arr)))
-		// 	route02Arr = make([]models.Route02, 0)
-		// }
 	}
-	// if len(route02Arr) > 0 {
-	// 	_, err = routeSrv.WithTrx(tx).Route02InsertArr(route02Arr)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		return err
-	// 	}
-	// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(route02Arr)))
-	// }
-	// tx.Commit()
 	logger.INFO("Finished sychronization data from OASA Server.")
 	return nil
 }
@@ -687,15 +584,6 @@ func (s *syncService) syncRouteDetails() error {
 	}
 
 	// TODO: Δεν θα κάνουμε εδώ διαγραφή από την Βάση Δεδομένων
-	// tx := s.dbConnection.Begin()
-	// err := routeSrv.WithTrx(tx).DeleteRoute01()
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return err
-	// }
-	// logger.INFO("Delete from Route01 Table succesfully.")
-
-	// var route01Arr []models.Route01 = make([]models.Route01, 0)
 	s.HelpRoute01 = make([]models.Route01, 0)
 	logger.INFO("Get details for Route data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
@@ -723,109 +611,149 @@ func (s *syncService) syncRouteDetails() error {
 
 			s.HelpRoute01 = append(s.HelpRoute01, rt)
 		}
-		// if len(route01Arr) == 15000 {
-		// 	_, err = routeSrv.WithTrx(tx).Route01InsertArr(route01Arr)
-		// 	if err != nil {
-		// 		tx.Rollback()
-		// 		return err
-		// 	}
-		// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(route01Arr)))
-		// 	route01Arr = make([]models.Route01, 0)
-		// }
+
 	}
-	// if len(route01Arr) > 0 {
-	// 	_, err = routeSrv.WithTrx(tx).Route01InsertArr(route01Arr)
-	// 	if err != nil {
-	// 		tx.Rollback()
-	// 		return err
-	// 	}
-	// 	logger.INFO(fmt.Sprintf("Batch of data size %d saved succesfully.", len(route01Arr)))
-	// }
-	// tx.Commit()
+
 	logger.INFO("Finished sychronization detail for Route data from OASA Server.")
 	return nil
 }
 
-func (s *syncService) SyncSchedule() error {
-	lines, err := s.lineService.GetLineList()
-	if err != nil {
-		return err
-	}
-	// s.HelpSchedule = make([]models.Schedule, 0)
-	// s.HelpScheduletime = make([]models.Scheduletime, 0)
-	// s.HelpScheduleline = make([]models.Scheduleline, 0)
+/*
+Αυτό είναι από τα APIs που έχω αναλαλύψει μόνος μου, δεν τα δίνει ο OASA.
+Τα χρησιμοποιεί η εφαρμογή για να συγχρονίζει δεδομένα.
+*/
+func (s *syncService) syncScheduleMaster() error {
+	// *********** Παίρνουμε το connection από το Context της εφαρμογής ************
+	//var dbConnection *gorm.DB = ctx.Value(db.CONNECTIONVAR).(*gorm.DB)
+	// *****************************************************************************
 
-	logger.INFO("Get Schedule data per line from OASA server...")
-	for _, recLine := range lines {
-		// Με αυτό το Request φέρνουμε τα header των δρομολογίων
-		response := s.restService.OasaRequestApi00("getScheduleDaysMasterline", map[string]interface{}{
-			"p1": recLine.Line_Code,
-		})
-		if response.Error != nil {
-			return response.Error
+	// Δημιουργία ενός Rest Service για να κάνω την κλήση στον Server
+	var restSrv = s.restService
+
+	// var routeSrv = s.routeService
+	response := restSrv.OasaRequestApi02("getSched_Cats")
+	if response.Error != nil {
+		return response.Error
+	}
+
+	s.HelpSchedule = make([]models.Schedule, 0)
+	logger.INFO("Get Master Schedule data from OASA Server...")
+	for _, rec := range response.Data.([]string) {
+		row := strings.Split(recPreparation(rec), ",")
+		if len(row) < int(5) {
+			return fmt.Errorf("Data is missing for Master Schedule.")
 		}
 
-		s.addScheduleInArray(response.Data.([]interface{}), recLine.Line_Code, int32(recLine.Ml_Code))
+		rt := models.Schedule{}
+		num32, err := utils.StrToInt32(row[0])
+		if err != nil {
+			return err
+		}
+		rt.Sdc_Code = *num32
+		rt.Sdc_Descr = row[1]
+		rt.Sdc_Descr_Eng = row[2]
+		s.HelpSchedule = append(s.HelpSchedule, rt)
 	}
-	logger.INFO("Finished sychronization Schedule data per line from OASA server.")
+
+	logger.INFO("Finished sychronization Master Schedule data from OASA Server.")
 	return nil
 }
 
-func (s *syncService) addScheduleInArray(currArr []interface{}, line_code int32, ml_code int32) {
-	if currArr == nil {
-		return
-	}
-
-	if s.HelpSchedule == nil {
-		s.HelpSchedule = make([]models.Schedule, 0) // Initialize if nil
-	}
-
-	if s.HelpScheduletime == nil {
-		s.HelpScheduletime = make([]models.Scheduletime, 0) // Initialize if nil
-	}
-
-	if s.HelpScheduleline == nil {
-		s.HelpScheduleline = make([]models.Scheduleline, 0)
-	}
-
-	var scheduleMapper = mapper.NewScheduleMapper()
-	var scheduleMappertime = mapper.NewScheduletimeMapper()
-	scheduleArr, err := scheduleMapper.MapDto(currArr)
+func convertStrToTime(strVal string) *time.Time {
+	timeVal, err := time.Parse(models.CustomTimeFormat, strVal)
 	if err != nil {
-		logger.ERROR(err.Error())
+		logger.Logger.Error("Σφάλμα κατά την μετατροπή απόσυμβολοσειρά σε Time. Δεν είναι valid τιμή %s. [%v]", strVal, err)
+		return nil
 	}
-	for _, sched := range scheduleArr {
+	return &timeVal
+}
 
-		if _, ok := s.scheduleMasterKey[int32(sched.Sdc_Code)]; !ok {
-			s.scheduleMasterKey[int32(sched.Sdc_Code)] = int32(sched.Sdc_Code)
-			s.HelpSchedule = append(s.HelpSchedule, scheduleMapper.MapDtoToSchedule(sched))
+func (s *syncService) syncScheduleTime() error {
+	// *********** Παίρνουμε το connection από το Context της εφαρμογής ************
+	//var dbConnection *gorm.DB = ctx.Value(db.CONNECTIONVAR).(*gorm.DB)
+	// *****************************************************************************
+
+	// Δημιουργία ενός Rest Service για να κάνω την κλήση στον Server
+	var restSrv = s.restService
+
+	// var routeSrv = s.routeService
+	response := restSrv.OasaRequestApi02("getSched_entries")
+	if response.Error != nil {
+		return response.Error
+	}
+
+	s.HelpScheduletime = make([]models.Scheduletime, 0)
+	logger.INFO("Get Schedule time entries data from OASA Server...")
+	for _, rec := range response.Data.([]string) {
+		row := strings.Split(recPreparation(rec), ",")
+		if len(row) < int(13) {
+			return fmt.Errorf("Data row Schedule time data is missing or corrupted.")
 		}
-		s.HelpScheduleline = append(s.HelpScheduleline, models.Scheduleline{Sdc_Cd: int64(sched.Sdc_Code), Ln_Code: line_code})
-		// TODO: Εδώ πρέπει να φέρνουμε για κάθε συνδιασμό line_code, ml_code για κάθε sdc_code
-		response := s.restService.OasaRequestApi00("getSchedLines", map[string]interface{}{
-			"p1": ml_code,
-			"p2": sched.Sdc_Code,
-			"p3": line_code,
-		})
-		if response.Error != nil {
-			return
-		}
-		scheduletimeDto, err := scheduleMappertime.DtoToScheduleTime(response.Data.(map[string]interface{}))
-		// Εδώ φτιάχνουμε τα δεδομένα για τα δρομολογία το προορισμού
-		for _, rec := range scheduletimeDto.Go {
-			finalRec := scheduleMappertime.ScheduletimeDtoToScheduletime(rec, models.Direction_GO)
-			finalRec.Direction = models.Direction_GO
-			s.HelpScheduletime = append(s.HelpScheduletime, finalRec)
-		}
-		// Εδώ φτιάχνουμε τα δεδομένα για τα δρομολογία της επιστροφής
-		for _, rec := range scheduletimeDto.Come {
-			finalRec := scheduleMappertime.ScheduletimeDtoToScheduletime(rec, models.Direction_COME)
-			finalRec.Direction = models.Direction_COME
-			s.HelpScheduletime = append(s.HelpScheduletime, finalRec)
-		}
+
+		/*
+				Από την γραμμή χρειαζόμαστε
+			    index arr 1 -> sdc_code,
+						  4 -> line_code,
+						  6 -> start1,
+						  7 -> end1,
+						  10 -> start2,
+						  11 -> end2,
+						  12 -> sort
+		*/
+		inSdcCode, err := utils.StrToInt32(row[1])
 		if err != nil {
-			logger.ERROR(err.Error())
+			return err
+		}
+		inLineCd, err := utils.StrToInt32(row[4])
+		if err != nil {
+			return err
+		}
+		inSort, err := utils.StrToInt32(row[12])
+		if err != nil {
+			return err
+		}
+
+		strTimeVal := row[6]
+		endTimeVal := row[7]
+		if strTimeVal != "null" && endTimeVal != "null" {
+			rt1 := models.Scheduletime{}
+			rt1.Sdc_Cd = *inSdcCode
+			rt1.Ln_Code = *inLineCd
+			rt1.Direction = models.Direction_GO
+			rt1.Sort = *inSort
+			timeVal := convertStrToTime(strTimeVal)
+			if timeVal != nil {
+				rt1.Start_time = models.OpswTime(*timeVal)
+			}
+
+			timeVal = convertStrToTime(endTimeVal)
+			if timeVal != nil {
+				rt1.End_time = models.OpswTime(*timeVal)
+			}
+			s.HelpScheduletime = append(s.HelpScheduletime, rt1)
+		}
+
+		strTimeVal = row[10]
+		endTimeVal = row[11]
+		if strTimeVal != "null" && endTimeVal != "null" {
+			rt2 := models.Scheduletime{}
+			rt2.Sdc_Cd = *inSdcCode
+			rt2.Ln_Code = *inLineCd
+			rt2.Direction = models.Direction_COME
+			rt2.Sort = *inSort
+			timeVal := convertStrToTime(strTimeVal)
+			if timeVal != nil {
+				rt2.Start_time = models.OpswTime(*timeVal)
+			}
+
+			timeVal = convertStrToTime(endTimeVal)
+			if timeVal != nil {
+				rt2.End_time = models.OpswTime(*timeVal)
+			}
+			s.HelpScheduletime = append(s.HelpScheduletime, rt2)
 		}
 	}
 
+	logger.INFO("Finished sychronization Master Schedule data from OASA Server.")
+	return nil
 }

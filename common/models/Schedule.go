@@ -55,10 +55,10 @@ type ScheduleDto struct {
 }
 
 type Schedule struct {
-	Id            int64     `json:"id" gorm:"primaryKey"`
-	Sdc_Descr     string    `json:"sdc_descr"`
-	Sdc_Descr_Eng string    `json:"sdc_descr_eng"`
-	Sdc_Code      opswInt32 `json:"sdc_code"`
+	Id            int64  `json:"id" gorm:"primaryKey"`
+	Sdc_Descr     string `json:"sdc_descr"`
+	Sdc_Descr_Eng string `json:"sdc_descr_eng"`
+	Sdc_Code      int32  `json:"sdc_code"`
 	// Times         []Scheduletime `json:"times" gorm:"foreignKey:Sdc_Cd;references:Sdc_Code"`
 }
 
