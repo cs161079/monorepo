@@ -34,6 +34,7 @@ func (a App) Boot() {
 		return
 	}
 	if err := a.syncService.DeleteAll(); err != nil {
+
 		a.logger.INFO(fmt.Sprintf("Κάτι πήγε στραβά με την διαγραφή των δεδομένων από την βάση δεδομένων. %s\n", err.Error()))
 		return
 	}
@@ -45,7 +46,7 @@ func (a App) Boot() {
 	// Calculate the duration
 	duration := end.Sub(start)
 	// Output the duration
-	fmt.Printf("Duration: %v\n", duration)
+	logger.INFO(fmt.Sprintf("Duration: %v\n", duration))
 }
 
 func InitializeApplication() {
@@ -55,11 +56,9 @@ func InitializeApplication() {
 		fmt.Println("Error loading .env file")
 	}
 	logger.CreateLogger()
-	originalStdout := os.Stdout
+	// originalStdout := os.Stdout
 
-	os.Stdout = logger.Logger.Out.(*os.File) // Set output destination
-
-	fmt.Printf(`
+	logger.Logger.Out.Write([]byte(fmt.Sprintf(`
   .    ___    _    ____    _      
  /\\  / _ \  / \  / ___|  / \   
 ( ( )| | | |/ _ \ \___ \ / _ \   
@@ -71,8 +70,8 @@ func InitializeApplication() {
             | |___| | | (_) | | | | |_| | (_) | |_) |      / ___ \| |_) | |_) | | | (_| (_| | |_| | (_) | | | |  ) ) ) )
              \____|_|  \___/|_| |_|\___/ \___/|_.__/      /_/   \_\ .__/| .__/|_|_|\___\__,_|\__|_|\___/|_| |_| / / / / 
                                                                   |_|   |_|                                    /_/_/_/
-	:: OASA Synchtonization Data application (v%s) ::`+"\n\n", os.Getenv("application.version"))
-	os.Stdout = originalStdout
+	:: OASA Synchtonization Data application (v%s) ::`+"\n\n", os.Getenv("application.version"))))
+	//os.Stdout = originalStdout
 }
 
 func BuildInRuntime() (*App, error) {

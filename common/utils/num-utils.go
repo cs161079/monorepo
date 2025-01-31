@@ -42,10 +42,14 @@ func StrToInt16(input interface{}) (*int16, error) {
 }
 
 func stringToNumberInternal(input string, bitSize int) (*int64, error) {
-	sourceNumVal, err := strconv.ParseInt(strings.Trim(input, " "), 10, bitSize)
-	if err != nil {
-		//panic("Δεν ήταν δυνατή η μετατροπή της συμβολοσειράς σε αριθμό για το πεδίο " + input)
-		return nil, err
+	var sourceNumVal int64 = 0
+	var err error = nil
+	if input != "" {
+		sourceNumVal, err = strconv.ParseInt(strings.Trim(input, " "), 10, bitSize)
+		if err != nil {
+			//panic("Δεν ήταν δυνατή η μετατροπή της συμβολοσειράς σε αριθμό για το πεδίο " + input)
+			return nil, err
+		}
 	}
 	return &sourceNumVal, nil
 }

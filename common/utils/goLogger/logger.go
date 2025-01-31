@@ -3,12 +3,14 @@ package logger
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
 	easy "github.com/t-tomalak/logrus-easy-formatter"
+	"gopkg.in/natefinch/lumberjack.v2"
 	gormlogger "gorm.io/gorm/logger"
 )
 
@@ -32,14 +34,6 @@ func CreateLogger() OpswLogger {
 	if applicationName == "" {
 		applicationName = "DefaultApplication"
 	}
-	var topicLogger = &logger.Logger{
-		Out:   os.Stderr,
-		Level: logger.InfoLevel,
-		Formatter: &easy.Formatter{
-			TimestampFormat: "2006-01-02 15:04:05",
-			LogFormat:       "%time%  %lvl% --- %msg%",
-		},
-	}
 	var rootLogsPath = os.Getenv("application.logs.path")
 	if rootLogsPath == "" {
 		rootLogsPath = rootLogsDirpath
@@ -49,19 +43,31 @@ func CreateLogger() OpswLogger {
 	if err != nil {
 		//fmt.Printf("error create directory file: %v\n", err)
 	}
+
+	Logger = &logger.Logger{
+		Out:   io.MultiWriter(os.Stdout),
+		Level: logger.InfoLevel,
+		Formatter: &easy.Formatter{
+			TimestampFormat: "2006-01-02 15:04:05",
+			LogFormat:       "%time%  %lvl% --- %msg%",
+		},
+	}
+
 	//fmt.Println("Folder create succefully for logs....")
 	var runMode = os.Getenv("application.mode")
 	if runMode == "PROD" {
 		fileName := filepath.Join(rootLogsPath, applicationName, "oasaLogs.log")
-		//open a file
-		f, err := os.OpenFile(fileName, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
-		if err != nil {
-			fmt.Printf("error opening file: %v\n", err)
+		var lmbLogger = &lumberjack.Logger{
+			Filename:   fileName,
+			MaxSize:    1,    // Max size in MB (not KB, so 100MB)
+			MaxBackups: 5,    // Number of old files to keep
+			MaxAge:     30,   // Days to retain old files
+			Compress:   true, // Enable compression
 		}
-		topicLogger.SetOutput(f)
+		Logger.SetOutput(io.MultiWriter(lmbLogger))
 	}
-	Logger = topicLogger
-	return OpswLogger{logger: topicLogger}
+
+	return OpswLogger{logger: Logger}
 }
 
 func InitLogger(applicationName string) {

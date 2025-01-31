@@ -305,6 +305,7 @@ func (s *syncService) SyncData() error {
 	}
 	uvServ := s.uVversionService
 	// routeDetailMustUpdate := false
+	logger.INFO("Fetching data from OASA Server...")
 	for _, rec := range versionsArr {
 		dbRec, err := uvServ.Select(rec.UVersion.Uv_descr)
 		if err != nil {
@@ -315,49 +316,38 @@ func (s *syncService) SyncData() error {
 		if dbRec == nil || frServeVers > dbRec.Uv_lastupdatelong {
 			switch rec.UVersion.Uv_descr {
 			case "LINES":
-				logger.INFO("Lines will be updated...")
 				if err := s.syncLines(); err != nil {
 					return err
 				}
 				// Εδώ θα πρέπει να κάνουμε Update την εγγραφή στον πίνακα με το νέο Version.
 				//uvServ.Post(&rec.UVersion)
 			case "ROUTES":
-				// routeDetailMustUpdate = true
-				logger.INFO("Routes will be updated...")
 				if err := s.syncRoutes(); err != nil {
 					return err
 				}
 				// Εδώ θα πρέπει να κάνουμε Update την εγγραφή στον πίνακα με το νέο Version.
 				//uvServ.Post(&rec.UVersion)
 			case "STOPS":
-				logger.INFO("Stops will be updated...")
 				if err := s.syncStops(); err != nil {
 					return err
 				}
 				// Εδώ θα πρέπει να κάνουμε Update την εγγραφή στον πίνακα με το νέο Version.
 				//uvServ.Post(&rec.UVersion)
 			case "ROUTE STOPS":
-				// routeDetailMustUpdate = true
-				logger.INFO("Stops per Route will be updated...")
 				if err := s.syncRouteStops(); err != nil {
 					return err
 				}
 				// Εδώ θα πρέπει να κάνουμε Update την εγγραφή στον πίνακα με το νέο Version.
 				//uvServ.Post(&rec.UVersion)
 			case "ROUTE DETAIL":
-				// routeDetailMustUpdate = false
-				logger.INFO("Route details be updated....")
 				if err := s.syncRouteDetails(); err != nil {
 					return err
 				}
 			case "SCHED_CATS":
-				logger.INFO("Schedules be updated....")
 				if err := s.syncScheduleMaster(); err != nil {
 					return err
 				}
 			case "SCHED_ENTRIES":
-				// routeDetailMustUpdate = false
-				logger.INFO("Schedule details and times be updated....")
 				if err := s.syncScheduleTime(); err != nil {
 					return err
 				}
@@ -381,9 +371,8 @@ func (s *syncService) syncLines() error {
 		return response.Error
 	}
 	// TODO: Το έκοψα γιατί δεν θα κάνω εδώ το Delete
-	logger.INFO("Get Route data from OASA Server...")
+	logger.INFO("\tFetch lines data...")
 	s.HelpLine = make([]models.Line, 0)
-	logger.INFO("Get line data from OASA Server...")
 	for _, ln := range response.Data.([]any) {
 		lineOasa := lineSrv.GetMapper().GeneralLine(ln.(map[string]interface{}))
 		line := lineSrv.GetMapper().OasaToLine(lineOasa)
@@ -393,9 +382,6 @@ func (s *syncService) syncLines() error {
 		// }
 		s.HelpLine = append(s.HelpLine, line)
 	}
-
-	// TODO: Δεν θα κάνουμε εδώ Insert στην βάση.
-	logger.INFO("Finished sychronize data from OASA Server.")
 	return nil
 }
 
@@ -406,6 +392,7 @@ func (s *syncService) syncRoutes() error {
 	var restSrv = s.restService //service.NewRestService()
 
 	// var routeSrv = s.routeService
+	logger.INFO("\tFetching Routes data...")
 	response := restSrv.OasaRequestApi02("getRoutes")
 	if response.Error != nil {
 		return response.Error
@@ -448,10 +435,6 @@ func (s *syncService) syncRoutes() error {
 		rt.Route_Distance = fl32
 
 		s.HelpRoute = append(s.HelpRoute, rt)
-		//logger.INFO(fmt.Sprintf("Η διαδρομή [routr %d, line %d] προστεθηκε", rt.Route_Code, rt.Line_Code))
-
-		// TODO: Αλλαγή
-
 	}
 
 	return nil
@@ -464,6 +447,7 @@ func (s *syncService) syncStops() error {
 	var restSrv = s.restService //service.NewRestService()
 
 	// var stopSrv = s.stopService
+	logger.INFO("\tFetching stops data...")
 	response := restSrv.OasaRequestApi02("getStops")
 	if response.Error != nil {
 		return response.Error
@@ -517,7 +501,6 @@ func (s *syncService) syncStops() error {
 		// TODO: Αλλαγή δεν θα γίνετα
 
 	}
-	logger.INFO("Finished sycronization from OASA Server...")
 
 	return nil
 }
@@ -531,6 +514,7 @@ func (s *syncService) syncRouteStops() error {
 	var restSrv = s.restService
 
 	// var routeSrv = s.routeService
+	logger.INFO("\tFetching stops data per route ...")
 	response := restSrv.OasaRequestApi02("getRouteStops")
 	if response.Error != nil {
 		return response.Error
@@ -565,7 +549,6 @@ func (s *syncService) syncRouteStops() error {
 			s.HelpRoute02 = append(s.HelpRoute02, rt)
 		}
 	}
-	logger.INFO("Finished sychronization data from OASA Server.")
 	return nil
 }
 
@@ -578,6 +561,7 @@ func (s *syncService) syncRouteDetails() error {
 	var restSrv = s.restService
 
 	// var routeSrv = s.routeService
+	logger.INFO("\tFetching Route details & information data...")
 	response := restSrv.OasaRequestApi02("getRoute_detail")
 	if response.Error != nil {
 		return response.Error
@@ -585,7 +569,6 @@ func (s *syncService) syncRouteDetails() error {
 
 	// TODO: Δεν θα κάνουμε εδώ διαγραφή από την Βάση Δεδομένων
 	s.HelpRoute01 = make([]models.Route01, 0)
-	logger.INFO("Get details for Route data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(5) {
@@ -613,8 +596,6 @@ func (s *syncService) syncRouteDetails() error {
 		}
 
 	}
-
-	logger.INFO("Finished sychronization detail for Route data from OASA Server.")
 	return nil
 }
 
@@ -631,13 +612,13 @@ func (s *syncService) syncScheduleMaster() error {
 	var restSrv = s.restService
 
 	// var routeSrv = s.routeService
+	logger.INFO("\tFetchig Route Scedule infromatino data...")
 	response := restSrv.OasaRequestApi02("getSched_Cats")
 	if response.Error != nil {
 		return response.Error
 	}
 
 	s.HelpSchedule = make([]models.Schedule, 0)
-	logger.INFO("Get Master Schedule data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(5) {
@@ -654,8 +635,6 @@ func (s *syncService) syncScheduleMaster() error {
 		rt.Sdc_Descr_Eng = row[2]
 		s.HelpSchedule = append(s.HelpSchedule, rt)
 	}
-
-	logger.INFO("Finished sychronization Master Schedule data from OASA Server.")
 	return nil
 }
 
@@ -677,6 +656,7 @@ func (s *syncService) syncScheduleTime() error {
 	var restSrv = s.restService
 
 	// var routeSrv = s.routeService
+	logger.INFO("\tFetching Schedule details and times ...")
 	response := restSrv.OasaRequestApi02("getSched_entries")
 	if response.Error != nil {
 		return response.Error
@@ -702,58 +682,58 @@ func (s *syncService) syncScheduleTime() error {
 		*/
 		inSdcCode, err := utils.StrToInt32(row[1])
 		if err != nil {
-			return err
+			return fmt.Errorf("Error occured on sdc_code=%s field convertion from string to number. %v", row[1], err)
 		}
 		inLineCd, err := utils.StrToInt32(row[4])
 		if err != nil {
-			return err
+			return fmt.Errorf("Error occured on line_code=%s field convertion from string to number. %v", row[4], err)
 		}
 		inSort, err := utils.StrToInt32(row[12])
 		if err != nil {
-			return err
+			return fmt.Errorf("Error occured on sort=%s field convertion from string to number. %v", row[12], err)
 		}
 
-		strTimeVal := row[6]
-		endTimeVal := row[7]
-		if strTimeVal != "null" && endTimeVal != "null" {
-			rt1 := models.Scheduletime{}
-			rt1.Sdc_Cd = *inSdcCode
-			rt1.Ln_Code = *inLineCd
-			rt1.Direction = models.Direction_GO
-			rt1.Sort = *inSort
-			timeVal := convertStrToTime(strTimeVal)
-			if timeVal != nil {
-				rt1.Start_time = models.OpswTime(*timeVal)
+		if *inSort > 0 {
+			strTimeVal := row[6]
+			endTimeVal := row[7]
+			if strTimeVal != "null" && endTimeVal != "null" {
+				rt1 := models.Scheduletime{}
+				rt1.Sdc_Cd = *inSdcCode
+				rt1.Ln_Code = *inLineCd
+				rt1.Direction = models.Direction_GO
+				rt1.Sort = *inSort
+				timeVal := convertStrToTime(strTimeVal)
+				if timeVal != nil {
+					rt1.Start_time = models.OpswTime(*timeVal)
+				}
+
+				timeVal = convertStrToTime(endTimeVal)
+				if timeVal != nil {
+					rt1.End_time = models.OpswTime(*timeVal)
+				}
+				s.HelpScheduletime = append(s.HelpScheduletime, rt1)
 			}
 
-			timeVal = convertStrToTime(endTimeVal)
-			if timeVal != nil {
-				rt1.End_time = models.OpswTime(*timeVal)
-			}
-			s.HelpScheduletime = append(s.HelpScheduletime, rt1)
-		}
+			strTimeVal = row[10]
+			endTimeVal = row[11]
+			if strTimeVal != "null" && endTimeVal != "null" {
+				rt2 := models.Scheduletime{}
+				rt2.Sdc_Cd = *inSdcCode
+				rt2.Ln_Code = *inLineCd
+				rt2.Direction = models.Direction_COME
+				rt2.Sort = *inSort
+				timeVal := convertStrToTime(strTimeVal)
+				if timeVal != nil {
+					rt2.Start_time = models.OpswTime(*timeVal)
+				}
 
-		strTimeVal = row[10]
-		endTimeVal = row[11]
-		if strTimeVal != "null" && endTimeVal != "null" {
-			rt2 := models.Scheduletime{}
-			rt2.Sdc_Cd = *inSdcCode
-			rt2.Ln_Code = *inLineCd
-			rt2.Direction = models.Direction_COME
-			rt2.Sort = *inSort
-			timeVal := convertStrToTime(strTimeVal)
-			if timeVal != nil {
-				rt2.Start_time = models.OpswTime(*timeVal)
+				timeVal = convertStrToTime(endTimeVal)
+				if timeVal != nil {
+					rt2.End_time = models.OpswTime(*timeVal)
+				}
+				s.HelpScheduletime = append(s.HelpScheduletime, rt2)
 			}
-
-			timeVal = convertStrToTime(endTimeVal)
-			if timeVal != nil {
-				rt2.End_time = models.OpswTime(*timeVal)
-			}
-			s.HelpScheduletime = append(s.HelpScheduletime, rt2)
 		}
 	}
-
-	logger.INFO("Finished sychronization Master Schedule data from OASA Server.")
 	return nil
 }
