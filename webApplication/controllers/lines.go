@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,7 +8,6 @@ import (
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/service"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type LineController interface {
@@ -18,14 +16,17 @@ type LineController interface {
 }
 
 type LineControllerImplementation struct {
-	connection *gorm.DB
-	svc        service.LineService
+	svc          service.LineService
+	routeSvc     service.RouteService
+	schedService service.ScheduleService
 }
 
-func NewLineController(db *gorm.DB, svc service.LineService) LineControllerImplementation {
+func NewLineController(svc service.LineService, routeSvc service.RouteService,
+	schedService service.ScheduleService) LineControllerImplementation {
 	return LineControllerImplementation{
-		connection: db,
-		svc:        svc,
+		svc:          svc,
+		routeSvc:     routeSvc,
+		schedService: schedService,
 	}
 }
 
@@ -53,19 +54,31 @@ func (t LineControllerImplementation) lineDetails(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": "Line code must have a value."})
 		return
 	}
-	var result models.Line
-	results := t.connection.Preload("Routes").Preload("Schedules.SdcDetails").Where("line_code=?", code).Find(&result)
-	if results.RowsAffected == 0 {
-		results.Error = gorm.ErrRecordNotFound
+
+	var line *models.LineDto
+	line, err := t.svc.SelectByLineCode(code)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("Not exists Line with code=%s!", code), "code": "err-001"})
+		return
 	}
-	if results.Error != nil {
-		if errors.Is(results.Error, gorm.ErrRecordNotFound) {
-			ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("Not exists Line with code=%s!", code), "code": "err-001"})
-			return
-		} else {
-			panic(fmt.Sprintln("Database Error ", results.Error.Error()))
-		}
+
+	var route *models.Route
+	route, err = t.routeSvc.SelectFirstRouteByLinecodeWithStops(code)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		return
 	}
-	fmt.Printf("Query results [%d]", results.RowsAffected)
-	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": result})
+
+	line.Routes = append(line.Routes, *route)
+
+	var schedule *models.Schedule
+
+	schedule, err = t.schedService.SelectByLineSdcCodeWithTimes(code, line.Sdc_Cd)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		return
+	}
+	line.Schedule = *schedule
+
+	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": line})
 }

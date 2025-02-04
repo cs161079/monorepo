@@ -374,7 +374,7 @@ func (s *syncService) syncLines() error {
 	logger.INFO("\tFetch lines data...")
 	s.HelpLine = make([]models.Line, 0)
 	for _, ln := range response.Data.([]any) {
-		lineOasa := lineSrv.GetMapper().GeneralLine(ln.(map[string]interface{}))
+		lineOasa := lineSrv.GetMapper().GenDtLineOasa(ln.(map[string]interface{}))
 		line := lineSrv.GetMapper().OasaToLine(lineOasa)
 
 		// if _, ok := s.lineKeys[line.Line_Code]; !ok {
@@ -536,11 +536,11 @@ func (s *syncService) syncRouteStops() error {
 		}
 		rt.Rt_code = *num32
 		if _, ok := s.routeKeys[rt.Rt_code]; ok {
-			num64, err := utils.StrToInt64(row[2])
+			num32, err := utils.StrToInt32(row[2])
 			if err != nil {
 				return err
 			}
-			rt.Stp_code = *num64
+			rt.Stp_code = *num32
 			num16, err := utils.StrToInt16(row[3])
 			if err != nil {
 				return err

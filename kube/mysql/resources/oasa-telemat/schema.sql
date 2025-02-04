@@ -26,7 +26,7 @@ USE `oasaTelemat`;
 CREATE TABLE IF NOT EXISTS `line` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ml_code` int DEFAULT NULL,
-  `sdc_code` int DEFAULT NULL,
+  `sdc_cd` int DEFAULT NULL,
   `line_code` int NOT NULL,
   `line_id` varchar(45) NOT NULL,
   `line_descr` varchar(100) DEFAULT NULL,

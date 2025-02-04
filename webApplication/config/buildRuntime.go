@@ -44,7 +44,7 @@ func ErrorHandler(c *gin.Context, err any) {
 }
 
 func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation,
-	testCtrl controllers.TestController) *App {
+	compCtrl controllers.ComponentController, testCtrl controllers.TestController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	eng.Use(cors.Default())
@@ -53,6 +53,7 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation,
 	eng.Use(gin.Logger(), gin.CustomRecovery(ErrorHandler))
 
 	lineCtrl.AddRouters(eng)
+	compCtrl.AddRouters(eng)
 	testCtrl.AddRoutes(eng)
 
 	return &App{
@@ -65,7 +66,7 @@ func (a App) Boot() {
 	if port == "" {
 		port = "8080"
 	}
-	logger.Logger.Info("Application server start on port %s", port)
+	logger.INFO(fmt.Sprintf("Application server start on port %s", port))
 	a.engine.Run(fmt.Sprintf(":%s", port))
 }
 
@@ -75,11 +76,9 @@ func InitializeApplication() {
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
-	logger.InitLogger("WebApplication")
-	originalStdout := os.Stdout
+	logger.CreateLogger()
 
-	os.Stdout = logger.Logger.Out.(*os.File) // Set output destination
-	fmt.Printf(`
+	logger.Logger.Out.Write([]byte(fmt.Sprintf(`
   .    ___    _    ____    _       
  /\\  / _ \  / \  / ___|  / \    
 ( ( )| | | |/ _ \ \___ \ / _ \   
@@ -95,10 +94,7 @@ func InitializeApplication() {
                                                                                          
 
 
-:: OASA WEB APPLICATION (v1.0.0) ::
-
-`)
-	os.Stdout = originalStdout
+:: OASA WEB APPLICATION (v%s) :: `+"\n\n", os.Getenv("application.version"))))
 
 }
 
@@ -115,13 +111,14 @@ func BuildInRuntime() (*App, error) {
 		repository.NewScheduleRepository,
 		repository.NewStopRepository,
 		repository.NewUversionRepository,
-		service.NewLineService,
 		service.NewRouteService,
 		service.NewShedule01Service,
+		service.NewLineService,
 		service.NewSheduleService,
 		service.NewStopService,
 		service.NewuVersionService,
 		controllers.NewLineController,
+		controllers.NewComponentController,
 		controllers.TestControllerConstructor,
 		NewApp,
 	}
