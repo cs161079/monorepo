@@ -1,12 +1,12 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/service"
+	"github.com/cs161079/monorepo/common/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,23 +49,25 @@ func (u LineControllerImplementation) GetLineList(c *gin.Context) {
 
 func (t LineControllerImplementation) lineDetails(ctx *gin.Context) {
 	start := time.Now()
-	var code = ctx.Query("code")
-	if code == "" {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": "Line code must have a value."})
+	line_code, err := utils.StrToInt32(ctx.Query("code"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": "Query Parameter code is not a valid number."})
 		return
 	}
 
 	var line *models.LineDto
-	line, err := t.svc.SelectByLineCode(code)
+	line, err = t.svc.SelectByLineCode(*line_code)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("Not exists Line with code=%s!", code), "code": "err-001"})
+		models.HttpResponse(ctx, err)
 		return
 	}
 
 	var route *models.Route
-	route, err = t.routeSvc.SelectFirstRouteByLinecodeWithStops(code)
+	route, err = t.routeSvc.SelectFirstRouteByLinecodeWithStops(*line_code)
+
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		// ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		models.HttpResponse(ctx, err)
 		return
 	}
 
@@ -73,9 +75,10 @@ func (t LineControllerImplementation) lineDetails(ctx *gin.Context) {
 
 	var schedule *models.Schedule
 
-	schedule, err = t.schedService.SelectByLineSdcCodeWithTimes(code, line.Sdc_Cd)
+	schedule, err = t.schedService.SelectByLineSdcCodeWithTimes(line.Line_Code, line.Sdc_Cd)
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		//ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		models.HttpResponse(ctx, err)
 		return
 	}
 	line.Schedule = *schedule

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"errors"
+	"fmt"
+	"net/http"
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
@@ -42,18 +44,22 @@ func (r lineRepository) WithTx(tx *gorm.DB) lineRepository {
 
 func (r lineRepository) SelectByCode(lineCode int32) (*models.Line, error) {
 	var result models.Line
-	dbResults := r.DB.Table(db.LINETABLE).Where("line_code = ?", lineCode).Find(&result)
-	if dbResults.RowsAffected == 0 {
-		dbResults.Error = gorm.ErrRecordNotFound
-	}
+
+	// Query the database for the line with the provided code.
+	dbResults := r.DB.Table(db.LINETABLE).Where("line_code = ?", lineCode).First(&result)
+
+	// Check if the query was successful or if no rows were found.
 	if dbResults.Error != nil {
 		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
-			return nil, nil
-		} else if errors.Is(dbResults.Error, MyError{}) {
-			//panic(fmt.Sprintln("Database Error ", results.Error.Error()))
-			return nil, dbResults.Error
+			// No record found, return nil for the result with no error.
+			return nil, models.NewError(dbResults.Error.Error(),
+				fmt.Sprintf("No line found with code %d.", lineCode), http.StatusNotFound)
 		}
+		// Return any other errors that occurred.
+		return nil, dbResults.Error
 	}
+
+	// Return the result if found.
 	return &result, nil
 }
 
@@ -99,8 +105,9 @@ func (r lineRepository) InsertArray(entityArr []models.Line) ([]models.Line, err
 }
 
 type MyError struct {
+	Message string
 }
 
 func (t MyError) Error() string {
-	return "This is my critical Error"
+	return t.Message
 }

@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
@@ -51,7 +53,11 @@ func (r routeRepository) SelectByLineCodeWithStops(lineCode int32) (*models.Rout
 	var result models.Route
 	dbResults := r.DB.Preload("Route02s.Stop").Where("Ln_Code = ?", lineCode).Order("route_code").First(&result)
 	if dbResults.Error != nil {
-		return nil, fmt.Errorf("Database error. [%s]", dbResults.Error.Error())
+		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
+			return nil, models.NewError(dbResults.Error.Error(),
+				fmt.Sprintf("No Route found with code %d.", lineCode), http.StatusNotFound)
+		}
+		return nil, dbResults.Error
 	}
 
 	return &result, nil

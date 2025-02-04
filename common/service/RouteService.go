@@ -1,12 +1,9 @@
 package service
 
 import (
-	"fmt"
-
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
-	"github.com/cs161079/monorepo/common/utils"
 
 	"gorm.io/gorm"
 )
@@ -23,7 +20,7 @@ type RouteService interface {
 	Route01InsertArr([]models.Route01) ([]models.Route01, error)
 	Route01InsertChunkArray(chunkSize int, allData []models.Route01) error
 
-	SelectFirstRouteByLinecodeWithStops(line_code string) (*models.Route, error)
+	SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error)
 }
 
 type routeService struct {
@@ -162,10 +159,6 @@ func (s routeService) DeleteRoute01() error {
 	return s.repo01.Delete()
 }
 
-func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code string) (*models.Route, error) {
-	num32, err := utils.StrToInt32(line_code)
-	if err != nil {
-		return nil, fmt.Errorf("Error on converting String to numbe. %s", err.Error())
-	}
-	return s.repo.SelectByLineCodeWithStops(*num32)
+func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error) {
+	return s.repo.SelectByLineCodeWithStops(line_code)
 }

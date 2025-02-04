@@ -2,12 +2,10 @@ package service
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
-	"github.com/cs161079/monorepo/common/utils"
 
 	"gorm.io/gorm"
 )
@@ -18,7 +16,7 @@ type LineService interface {
 	InsertChunkArray(chunkSize int, allData []models.Line) error
 	DeleteAll() error
 	GetLineList() ([]models.LineDto01, error)
-	SelectByLineCode(lineCode string) (*models.LineDto, error)
+	SelectByLineCode(lineCode int32) (*models.LineDto, error)
 
 	InsertLine(line *models.Line) (*models.Line, error)
 	PostLine(line *models.Line) (*models.Line, error)
@@ -42,15 +40,10 @@ func (s lineService) GetMapper() mapper.LineMapper {
 	return s.mapper
 }
 
-func (s lineService) SelectByLineCode(line_code string) (*models.LineDto, error) {
-	num32, err := utils.StrToInt32(line_code)
+func (s lineService) SelectByLineCode(line_code int32) (*models.LineDto, error) {
+	line, err := s.repo.SelectByCode(line_code)
 	if err != nil {
-		return nil, fmt.Errorf("Error on converting String to numbe. %s", err.Error())
-	}
-
-	line, err := s.repo.SelectByCode(*num32)
-	if err != nil {
-		return nil, fmt.Errorf("Database Error Occured. [%s]", err.Error())
+		return nil, err
 	}
 	var result = s.mapper.LineToDto(*line)
 	return &result, nil

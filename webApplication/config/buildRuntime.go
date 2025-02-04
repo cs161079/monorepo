@@ -11,7 +11,6 @@ import (
 	"github.com/cs161079/monorepo/webApplication/controllers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/go-errors/errors"
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
@@ -21,25 +20,10 @@ type App struct {
 	engine *gin.Engine
 }
 
+// ErrorHandler is a custom middleware for handling errors
+// When panic occured from programm ErrorHandler is here to catch it.
 func ErrorHandler(c *gin.Context, err any) {
-	// Wrap the error with stack trace
-	var wrappedErr error
-	switch e := err.(type) {
-	case error:
-		wrappedErr = errors.Wrap(e, 1)
-	default:
-		wrappedErr = errors.New("unknown error occurred")
-	}
-
-	// Log the error with context
-	logger.ERROR(fmt.Sprintln("Error occurred",
-		"error", wrappedErr.Error(),
-		"stack", wrappedErr.(*errors.Error).ErrorStack(),
-		"path", c.Request.URL.Path,
-		"method", c.Request.Method,
-		"clientIP", c.ClientIP(),
-	))
-	var httpResponse = map[string]any{"Message": "Internal server error", "Status": 500}
+	var httpResponse = map[string]any{"error": "Internal server error", "code": -1}
 	c.AbortWithStatusJSON(500, httpResponse)
 }
 
