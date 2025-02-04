@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -10,7 +12,7 @@ import (
 
 type RouteRepository interface {
 	SelectByCode(int32) (*models.Route, error)
-	SelectByLineCode(int32) (*[]models.Route, error)
+	SelectByLineCodeWithStops(int32) (*models.Route, error)
 	Insert(models.Route) (*models.Route, error)
 	InsertArray([]models.Route) ([]models.Route, error)
 	Update(models.Route) (*models.Route, error)
@@ -45,13 +47,14 @@ func (r routeRepository) SelectByCode(routeCode int32) (*models.Route, error) {
 	return &selectedVal, nil
 }
 
-func (r routeRepository) SelectByLineCode(lineCode int32) (*[]models.Route, error) {
-	var selectedVal []models.Route
-	res := r.DB.Table(db.ROUTETABLE).Where("line_code = ?", lineCode).Find(&selectedVal)
-	if res.Error != nil {
-		return nil, res.Error
+func (r routeRepository) SelectByLineCodeWithStops(lineCode int32) (*models.Route, error) {
+	var result models.Route
+	dbResults := r.DB.Preload("Route02s.Stop").Where("Ln_Code = ?", lineCode).Order("route_code").First(&result)
+	if dbResults.Error != nil {
+		return nil, fmt.Errorf("Database error. [%s]", dbResults.Error.Error())
 	}
-	return &selectedVal, nil
+
+	return &result, nil
 }
 
 func (r routeRepository) Insert(input models.Route) (*models.Route, error) {

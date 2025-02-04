@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -15,6 +17,8 @@ type ScheduleRepository interface {
 	InsertScheduleMaster(input models.Schedule) error
 	InsertScheduleMasterArray(input []models.Schedule) ([]models.Schedule, error)
 	DeleteScheduleMaster() error
+
+	SelectByLineSdcCodeWithTimes(int32, int32) (*models.Schedule, error)
 }
 
 type scheduleRepository struct {
@@ -75,4 +79,16 @@ func (r scheduleRepository) InsertScheduleMasterArray(input []models.Schedule) (
 		return nil, res.Error
 	}
 	return input, nil
+}
+
+func (r scheduleRepository) SelectByLineSdcCodeWithTimes(lnCode int32, sdcCode int32) (*models.Schedule, error) {
+	var result models.Schedule
+	dbResults := r.DB.Preload("Schedule_Details", func(db *gorm.DB) *gorm.DB {
+		return db.Where("ln_code = ?", lnCode).Order("sort")
+	}).Where("sdc_code = ?", sdcCode).Find(&result)
+
+	if dbResults.Error != nil {
+		return nil, fmt.Errorf("Database Error. [%s]", dbResults.Error.Error())
+	}
+	return &result, nil
 }

@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/cs161079/monorepo/common/utils"
-
-	"github.com/fatih/structs"
+	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 )
 
 const (
@@ -47,9 +46,6 @@ func internalMapper(source map[string]interface{}, target interface{}) {
 					panic(err.Error())
 				}
 				var timeStr = timeStamp.Format("15:04")
-				if err != nil {
-					panic(err.Error())
-				}
 				v.Set(reflect.ValueOf(timeStr))
 			case reflect.String.String():
 				v.SetString(sourceFieldVal.(string))
@@ -77,40 +73,26 @@ func internalMapper(source map[string]interface{}, target interface{}) {
 	}
 }
 
-// Function to Map structures from one to another with same field data types
-// but one of them has less fields from the other
-func structMapper(source interface{}, target interface{}) {
-	sourceMap := structs.Map(source)
-	rvTarget := reflect.ValueOf(target)
-	trvTarget := reflect.TypeOf(target)
-
-	if rvTarget.Kind() == reflect.Pointer {
-		rvTarget = rvTarget.Elem()
-		trvTarget = trvTarget.Elem()
-		target = reflect.New(rvTarget.Type())
-	}
-	for i := 0; i < rvTarget.NumField(); i++ {
-		v := rvTarget.Field(i)
-		tv := trvTarget.Field(i)
-		// v.Set(reflect.ValueOf(source[tag]))
-		fieldName := tv.Name
-		sourceFieldVal := sourceMap[fieldName]
-		if sourceFieldVal != nil {
-			v.Set(reflect.ValueOf(sourceFieldVal))
-		}
-	}
-}
-
+// This function map one struct with other
+// Convert source struct to JSON and make JSON as target struct.
+//
+//	@param source is any struct to read
+//	@param target is any pointer of struct to write in
 func structMapper02(source any, target any) {
-	sourceMap := structs.Map(source)
-	// Convert map to JSON
-	jsonData, err := json.Marshal(sourceMap)
+	jsonData, err := json.Marshal(source)
 	if err != nil {
 		panic(err.Error())
 	}
 
 	err = json.Unmarshal(jsonData, target)
 	if err != nil {
+		logger.ERROR(err.Error())
 		panic(err.Error())
 	}
+}
+
+// This function call structMapper02 in
+// Created because structMapper02 is not accessible from other packages.
+func MapStruct(source any, target any) {
+	structMapper02(source, target)
 }

@@ -2,25 +2,29 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
+	"github.com/cs161079/monorepo/common/utils"
 
 	"gorm.io/gorm"
 )
 
 type LineService interface {
-	SelectByLineCode(lineCode int32) (*models.Line, error)
-	InsertLine(line *models.Line) (*models.Line, error)
+	WithTrx(*gorm.DB) lineService
 	InsertArray([]models.Line) ([]models.Line, error)
 	InsertChunkArray(chunkSize int, allData []models.Line) error
+	DeleteAll() error
+	GetLineList() ([]models.LineDto01, error)
+	SelectByLineCode(lineCode string) (*models.LineDto, error)
+
+	InsertLine(line *models.Line) (*models.Line, error)
 	PostLine(line *models.Line) (*models.Line, error)
 	PostLineArray(context.Context, []models.Line) ([]models.Line, error)
-	WithTrx(*gorm.DB) lineService
-	DeleteAll() error
+
 	GetMapper() mapper.LineMapper
-	GetLineList() ([]models.LineDto01, error)
 }
 type lineService struct {
 	repo   repository.LineRepository
@@ -38,8 +42,18 @@ func (s lineService) GetMapper() mapper.LineMapper {
 	return s.mapper
 }
 
-func (s lineService) SelectByLineCode(line_code int32) (*models.Line, error) {
-	return s.repo.SelectByCode(line_code)
+func (s lineService) SelectByLineCode(line_code string) (*models.LineDto, error) {
+	num32, err := utils.StrToInt32(line_code)
+	if err != nil {
+		return nil, fmt.Errorf("Error on converting String to numbe. %s", err.Error())
+	}
+
+	line, err := s.repo.SelectByCode(*num32)
+	if err != nil {
+		return nil, fmt.Errorf("Database Error Occured. [%s]", err.Error())
+	}
+	var result = s.mapper.LineToDto(*line)
+	return &result, nil
 
 }
 
@@ -108,26 +122,19 @@ func (s lineService) InsertChunkArray(chunkSize int, allData []models.Line) erro
 	for {
 		_, err := s.InsertArray(allData[stratIndex:endIndex])
 		if err != nil {
-			// txt.Rollback()
-			//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη των γραμμών από %d έως %d.", stratIndex, endIndex-1))
 			return err
 		}
-		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
 		stratIndex = endIndex
 		endIndex = stratIndex + chunkSize
 		if stratIndex > len(allData)-1 {
-			//logger.INFO("Η εισαγωγή γραμμών ολοκληρώθηκε.")
 			break
 		} else if endIndex > len(allData)-1 {
 			_, err := s.InsertArray(allData[stratIndex:])
 			if err != nil {
-				//txt.Rollback()
-				//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη των γραμμών από %d έως Τέλος.", stratIndex))
 				return err
 			}
 			break
 		}
-		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
 	}
 	return nil
 }

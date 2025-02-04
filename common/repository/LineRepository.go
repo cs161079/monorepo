@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -39,12 +41,20 @@ func (r lineRepository) WithTx(tx *gorm.DB) lineRepository {
 }
 
 func (r lineRepository) SelectByCode(lineCode int32) (*models.Line, error) {
-	var selectedVal models.Line
-	res := r.DB.Table(db.LINETABLE).Where("line_code = ?", lineCode).Find(&selectedVal)
-	if res.Error != nil {
-		return nil, res.Error
+	var result models.Line
+	dbResults := r.DB.Table(db.LINETABLE).Where("line_code = ?", lineCode).Find(&result)
+	if dbResults.RowsAffected == 0 {
+		dbResults.Error = gorm.ErrRecordNotFound
 	}
-	return &selectedVal, nil
+	if dbResults.Error != nil {
+		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		} else if errors.Is(dbResults.Error, MyError{}) {
+			//panic(fmt.Sprintln("Database Error ", results.Error.Error()))
+			return nil, dbResults.Error
+		}
+	}
+	return &result, nil
 }
 
 func (r lineRepository) Insert(line *models.Line) (*models.Line, error) {
@@ -86,4 +96,11 @@ func (r lineRepository) InsertArray(entityArr []models.Line) ([]models.Line, err
 		return nil, err
 	}
 	return entityArr, nil
+}
+
+type MyError struct {
+}
+
+func (t MyError) Error() string {
+	return "This is my critical Error"
 }

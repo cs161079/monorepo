@@ -10,6 +10,21 @@ import (
 const Direction_GO = 1
 const Direction_COME = 0
 
+// ********* Struct for Schedule times **************
+// *************** Database Entity ******************
+type Scheduletime struct {
+	Sdc_Cd     int32    `json:"sdc_code" gorm:"primaryKey"`
+	Ln_Code    int32    `json:"line_code" gorm:"primaryKey"`
+	Start_time OpswTime `json:"start_time" gorm:"primaryKey"`
+	End_time   OpswTime `json:"end_time"`
+	Sort       int32    `json:"sort"`
+	Direction  int8     `json:"direction" gorm:"primaryKey"`
+}
+
+func (Scheduletime) TableName() string {
+	return "Scheduletime"
+}
+
 // CustomDate type to handle custom date formats
 type OpswTime time.Time
 
@@ -42,34 +57,6 @@ func (d OpswTime) MarshalJSON() ([]byte, error) {
 		dateStr = ttime.Format("15:04:05")
 	}
 	return json.Marshal(dateStr)
-}
-
-type ScheduletimeDto struct {
-	Sdc_Code    opswInt32 `json:"sdc_code"`
-	Line_Code   opswInt32 `json:"sde_line1"`
-	Start_time1 OpswTime  `json:"sde_start1"`
-	End_time1   OpswTime  `json:"sde_end1"`
-	Start_time2 OpswTime  `json:"sde_start2"`
-	End_time2   OpswTime  `json:"sde_end2"`
-	Sort        opswInt32 `json:"sde_sort"`
-}
-
-type Scheduletime01Dto struct {
-	Go   []ScheduletimeDto `json:"go"`
-	Come []ScheduletimeDto `json:"come"`
-}
-
-type Scheduletime struct {
-	Sdc_Cd     int32    `json:"sdc_code" gorm:"primaryKey"`
-	Ln_Code    int32    `json:"line_code" gorm:"primaryKey"`
-	Start_time OpswTime `json:"start_time" gorm:"primaryKey"`
-	End_time   OpswTime `json:"end_time"`
-	Sort       int32    `json:"sort"`
-	Direction  int8     `json:"direction" gorm:"primaryKey"`
-}
-
-func (Scheduletime) TableName() string {
-	return "Scheduletime"
 }
 
 // Custom format for CustomTime

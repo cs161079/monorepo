@@ -17,7 +17,7 @@ type StopRepository interface {
 	Update(models.Stop) (*models.Stop, error)
 	List01(int32) (*[]models.Stop, error)
 	DeleteAll() error
-	SelectClosestStops(models.Point, float32, float32) ([]models.StopDto, error)
+	SelectClosestStops(float64, float64, float32, float32) ([]models.StopDto, error)
 	WithTx(*gorm.DB) stopRepository
 }
 
@@ -86,10 +86,10 @@ func (r stopRepository) DeleteAll() error {
 	return nil
 }
 
-func (r stopRepository) SelectClosestStops(point models.Point, from float32, to float32) ([]models.StopDto, error) {
+func (r stopRepository) SelectClosestStops(lat float64, long float64, from float32, to float32) ([]models.StopDto, error) {
 	var resultList []models.StopDto
 	var subQuery = r.DB.Table("stop s").Select("stop_code, stop_descr, stop_street," +
-		fmt.Sprintf("round(haversine_distance(%f, %f, s.stop_lat, s.stop_lng), 2)", point.Lat, point.Long) +
+		fmt.Sprintf("round(haversine_distance(%f, %f, s.stop_lat, s.stop_lng), 2)", lat, long) +
 		" AS distance")
 
 	if err := r.DB.Table("(?) as b", subQuery).Select(" b. stop_code, b.stop_descr, b.stop_street, b.distance").

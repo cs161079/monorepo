@@ -9,41 +9,31 @@ import (
 type Schedule01Service interface {
 	WithTrx(*gorm.DB) schedule01Service
 	DeleteAll() error
-	Insert(models.Scheduletime) (*models.Scheduletime, error)
 	InsertArray(allData []models.Scheduletime) ([]models.Scheduletime, error)
 	InsertSchedule01ChunkArray(chunkSize int, allData []models.Scheduletime) error
 }
 
 type schedule01Service struct {
-	Repo repository.Schedule01Repository
+	repo repository.Schedule01Repository
 }
 
 func NewShedule01Service(repo repository.Schedule01Repository) Schedule01Service {
 	return schedule01Service{
-		Repo: repo,
+		repo: repo,
 	}
 }
 
 func (s schedule01Service) DeleteAll() error {
-	return s.Repo.DeleteAll()
+	return s.repo.DeleteAll()
 }
 
 func (s schedule01Service) WithTrx(txtHandle *gorm.DB) schedule01Service {
-	s.Repo = s.Repo.WithTx(txtHandle)
+	s.repo = s.repo.WithTx(txtHandle)
 	return s
 }
 
-func (s schedule01Service) Insert(input models.Scheduletime) (*models.Scheduletime, error) {
-	var arr = make([]models.Scheduletime, 0)
-	arr = append(arr, input)
-	if _, err := s.InsertArray(arr); err != nil {
-		return nil, err
-	}
-	return &input, nil
-}
-
 func (s schedule01Service) InsertArray(allData []models.Scheduletime) ([]models.Scheduletime, error) {
-	return s.Repo.InsterSchedule01Array(allData)
+	return s.repo.InsterSchedule01Array(allData)
 }
 
 func (s schedule01Service) InsertSchedule01ChunkArray(chunkSize int, allData []models.Scheduletime) error {

@@ -11,7 +11,7 @@ import (
 )
 
 type Route02Repository interface {
-	SelectByCode(int32, int64, int16) (*models.Route02, error)
+	SelectByCode(int32, int32, int16) (*models.Route02, error)
 	DeleteStopByRoute(int32) error
 	InsertRoute02(models.Route02) error
 	InsertRoute02Arr([]models.Route02) error
@@ -29,7 +29,7 @@ func NewRoute02Repository(connection *gorm.DB) Route02Repository {
 	}
 }
 
-func (r route02Repository) SelectByCode(routecode int32, stopcode int64, senu int16) (*models.Route02, error) {
+func (r route02Repository) SelectByCode(routecode int32, stopcode int32, senu int16) (*models.Route02, error) {
 	var result models.Route02
 	dbRes := r.DB.Table(db.ROUTESTOPSTABLE).
 		Where("route_code=? and stop_code=? and senu=?", routecode, stopcode, senu).Find(&result)
