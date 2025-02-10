@@ -1,12 +1,13 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: enviroment-config
+  name: enviroment-config-job
   namespace: oasa-telemat
 data:
   database.ip: mysql-svc
   database.dbname: oasa-telemat
   database.user: mysql-user
   database.password: YourPassword$@
-  application.name: webApp
+  application.name: cronJobApp
   application.logs.path: /var/log
+  application.mode: PROD

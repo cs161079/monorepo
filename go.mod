@@ -3,20 +3,21 @@ module github.com/cs161079/monorepo
 go 1.20
 
 require (
+	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-errors/errors v1.5.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	go.uber.org/dig v1.18.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/gorm v1.25.9
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/gin-contrib/cors v1.7.2 // indirect
-	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
 )
 
 require (

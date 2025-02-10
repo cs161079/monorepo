@@ -16,7 +16,7 @@ spec:
         app: oasa-server
     spec:
       containers:
-      - image: localhost:5000/exec_server:latest
+      - image: localhost:5000/webapp:0.0.1
         name: oasa-server
         ports:
         - containerPort: 8082
