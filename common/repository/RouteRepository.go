@@ -15,6 +15,7 @@ import (
 type RouteRepository interface {
 	SelectByCode(int32) (*models.Route, error)
 	SelectByLineCodeWithStops(int32) (*models.Route, error)
+	SelectByRouteCodeWithStops(int32) (*models.Route, error)
 	Insert(models.Route) (*models.Route, error)
 	InsertArray([]models.Route) ([]models.Route, error)
 	Update(models.Route) (*models.Route, error)
@@ -51,11 +52,29 @@ func (r routeRepository) SelectByCode(routeCode int32) (*models.Route, error) {
 
 func (r routeRepository) SelectByLineCodeWithStops(lineCode int32) (*models.Route, error) {
 	var result models.Route
-	dbResults := r.DB.Preload("Route02s.Stop").Where("Ln_Code = ?", lineCode).Order("route_code").First(&result)
+	dbResults := r.DB.Preload("Route02s", func(db *gorm.DB) *gorm.DB {
+		return db.Order("Route02.senu")
+	}).Preload("Route02s.Stop").Where("Ln_Code = ?", lineCode).Order("route_code").First(&result)
 	if dbResults.Error != nil {
 		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
 			return nil, models.NewError(dbResults.Error.Error(),
 				fmt.Sprintf("No Route found with code %d.", lineCode), http.StatusNotFound)
+		}
+		return nil, dbResults.Error
+	}
+
+	return &result, nil
+}
+
+func (r routeRepository) SelectByRouteCodeWithStops(routeCd int32) (*models.Route, error) {
+	var result models.Route
+	dbResults := r.DB.Preload("Route02s", func(db *gorm.DB) *gorm.DB {
+		return db.Order("Route02.senu")
+	}).Preload("Route02s.Stop").Where("route_code = ?", routeCd).First(&result)
+	if dbResults.Error != nil {
+		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
+			return nil, models.NewError(dbResults.Error.Error(),
+				fmt.Sprintf("No Route found with code %d.", routeCd), http.StatusNotFound)
 		}
 		return nil, dbResults.Error
 	}

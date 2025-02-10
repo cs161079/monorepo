@@ -24,6 +24,7 @@ type LineRepository interface {
 	LineList01() ([]models.LineDto01, error)
 	DeleteAll() error
 	WithTx(*gorm.DB) lineRepository
+	SelectAltLines(string) ([]models.Line, error)
 }
 
 func NewLineRepository(connection *gorm.DB) LineRepository {
@@ -102,6 +103,17 @@ func (r lineRepository) InsertArray(entityArr []models.Line) ([]models.Line, err
 		return nil, err
 	}
 	return entityArr, nil
+}
+
+func (r lineRepository) SelectAltLines(line_id string) ([]models.Line, error) {
+	var result []models.Line
+	dbResults := r.DB.Table(db.LINETABLE).Where("line_id=?", line_id).Order("line_code").Find(&result)
+	// Check if the query was successful or if no rows were found.
+	if dbResults.Error != nil {
+		// Return any other errors that occurred.
+		return nil, dbResults.Error
+	}
+	return result, nil
 }
 
 type MyError struct {

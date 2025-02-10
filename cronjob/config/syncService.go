@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -109,8 +110,8 @@ func NewSyncService(dbConnection *gorm.DB, restSrv service.RestService, lineSrv 
 }
 
 func recPreparation(recStr string) string {
-	var trimmedSpace = strings.ReplaceAll(recStr, " ", "")
-	return strings.ReplaceAll(trimmedSpace, "\"", "")
+	// var trimmedSpace = strings.TrimSpace(recStr)
+	return strings.ReplaceAll(recStr, "\"", "")
 }
 
 func FixRecordOrder(rec *dao.UVersion01) {
@@ -398,11 +399,22 @@ func (s *syncService) syncRoutes() error {
 		return response.Error
 	}
 
-	// TODO: Δεν θα κάνουμε εδώ Delete από τον πίνακα
+	// Create or overwrite the file (if it exists)
+	file, err := os.Create("tmp/routes.txt")
+	if err != nil {
+		//fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close() // Make sure to close the file when done
+
 	// Δεν θα χρησιμοποιήσουμε τοπικό πίνακα
 	// var routeArray []models.Route = make([]models.Route, 0)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
 	for _, rec := range response.Data.([]string) {
+
+		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
+		fmt.Fprintf(file, "%s\n", rec)
+
 		// ************** Κάθε γραμμή την κάνω Split με το κόμμα και γεμίζω τα Record των διαδρομών **************
 		// ************************* Έλεγχος της γραμμής εάν έχει όλη την πληροφορία *****************************
 		recordArr := strings.Split(recPreparation(rec), ",")
@@ -453,12 +465,22 @@ func (s *syncService) syncStops() error {
 		return response.Error
 	}
 
-	//TODO: Δεν θα κάνουμε διαγραφή
+	// Create or overwrite the file (if it exists)
+	file, err := os.Create("tmp/stops.txt")
+	if err != nil {
+		//fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close() // Make sure to close the file when done
 
 	s.HelpStop = make([]models.Stop, 0)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
 	logger.INFO("Get Stop data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
+
+		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
+		fmt.Fprintf(file, "%s\n", rec)
+
 		// ************** Κάθε γραμμή την κάνω Split με το κόμμα και γεμίζω τα Record των στάσεων **************
 		// ************************* Έλεγχος της γραμμής εάν έχει όλη την πληροφορία *****************************
 		recordArr := strings.Split(recPreparation(rec), ",")
@@ -520,10 +542,21 @@ func (s *syncService) syncRouteStops() error {
 		return response.Error
 	}
 
-	// TODO: Δεν θα γίνεται
+	// Create or overwrite the file (if it exists)
+	file, err := os.Create("tmp/route_stops.txt")
+	if err != nil {
+		//fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close() // Make sure to close the file when done
+
 	s.HelpRoute02 = make([]models.Route02, 0)
 	logger.INFO("Get Stops per Route data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
+
+		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
+		fmt.Fprintf(file, "%s\n", rec)
+
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(4) {
 			return fmt.Errorf("Τα δεδομένα της γραμμής είναι ελλειπής.")
@@ -567,9 +600,20 @@ func (s *syncService) syncRouteDetails() error {
 		return response.Error
 	}
 
-	// TODO: Δεν θα κάνουμε εδώ διαγραφή από την Βάση Δεδομένων
+	// Create or overwrite the file (if it exists)
+	file, err := os.Create("tmp/route_details.txt")
+	if err != nil {
+		//fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close() // Make sure to close the file when done
+
 	s.HelpRoute01 = make([]models.Route01, 0)
 	for _, rec := range response.Data.([]string) {
+
+		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
+		fmt.Fprintf(file, "%s\n", rec)
+
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(5) {
 			return fmt.Errorf("Τα δεδομένα της γραμμής είναι ελλειπής.")
@@ -618,28 +662,51 @@ func (s *syncService) syncScheduleMaster() error {
 		return response.Error
 	}
 
+	// Create or overwrite the file (if it exists)
+	file, err := os.Create("tmp/schedule_master.txt")
+	if err != nil {
+		//fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close() // Make sure to close the file when done
+
 	s.HelpSchedule = make([]models.Schedule, 0)
 	for _, rec := range response.Data.([]string) {
+
+		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
+		fmt.Fprintf(file, "%s\n", rec)
+
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(5) {
 			return fmt.Errorf("Data is missing for Master Schedule.")
 		}
 
 		rt := models.Schedule{}
-		num32, err := utils.StrToInt32(row[0])
-		if err != nil {
-			return err
+		for index, recField := range row {
+			recField = strings.TrimSpace(recField)
+			if index == 0 {
+				num32, err := utils.StrToInt32(recField)
+				if err != nil {
+					return err
+				}
+				rt.Sdc_Code = *num32
+			} else if index == 1 {
+				rt.Sdc_Descr = recField
+			} else if index == 2 {
+				rt.Sdc_Descr_Eng = recField
+			} else if index == 3 {
+				rt.Sdc_days = recField
+			} else if index == 4 {
+				rt.Sdc_months = recField
+			}
 		}
-		rt.Sdc_Code = *num32
-		rt.Sdc_Descr = row[1]
-		rt.Sdc_Descr_Eng = row[2]
 		s.HelpSchedule = append(s.HelpSchedule, rt)
 	}
 	return nil
 }
 
 func convertStrToTime(strVal string) *time.Time {
-	timeVal, err := time.Parse(models.CustomTimeFormat, strVal)
+	timeVal, err := time.Parse(models.CustomTimeFormat, strings.TrimSpace(strVal))
 	if err != nil {
 		logger.Logger.Error("Σφάλμα κατά την μετατροπή απόσυμβολοσειρά σε Time. Δεν είναι valid τιμή %s. [%v]", strVal, err)
 		return nil
@@ -662,9 +729,20 @@ func (s *syncService) syncScheduleTime() error {
 		return response.Error
 	}
 
+	// Create or overwrite the file (if it exists)
+	file, err := os.Create("tmp/schedule_times.txt")
+	if err != nil {
+		//fmt.Println("Error creating file:", err)
+		return err
+	}
+	defer file.Close() // Make sure to close the file when done
+
 	s.HelpScheduletime = make([]models.Scheduletime, 0)
 	logger.INFO("Get Schedule time entries data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
+		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
+		fmt.Fprintf(file, "%s\n", rec)
+
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(13) {
 			return fmt.Errorf("Data row Schedule time data is missing or corrupted.")
@@ -680,58 +758,69 @@ func (s *syncService) syncScheduleTime() error {
 						  11 -> end2,
 						  12 -> sort
 		*/
-		inSdcCode, err := utils.StrToInt32(row[1])
-		if err != nil {
-			return fmt.Errorf("Error occured on sdc_code=%s field convertion from string to number. %v", row[1], err)
-		}
-		inLineCd, err := utils.StrToInt32(row[4])
-		if err != nil {
-			return fmt.Errorf("Error occured on line_code=%s field convertion from string to number. %v", row[4], err)
-		}
-		inSort, err := utils.StrToInt32(row[12])
-		if err != nil {
-			return fmt.Errorf("Error occured on sort=%s field convertion from string to number. %v", row[12], err)
+		var mapVals map[string]interface{} = make(map[string]interface{})
+		for index, recField := range row {
+			recField = strings.TrimSpace(recField)
+			if index == 1 {
+				num32, err := utils.StrToInt32(recField)
+				if err != nil {
+					return fmt.Errorf("Error occured on sdc_code=%s field convertion from string to number. %v", row[1], err)
+				}
+				mapVals["sdc_code"] = *num32
+			} else if index == 4 {
+				num32, err := utils.StrToInt32(recField)
+				if err != nil {
+					return fmt.Errorf("Error occured on line_code=%s field convertion from string to number. %v", row[4], err)
+				}
+				mapVals["line_code"] = *num32
+			} else if index == 6 {
+				mapVals["Start_time1"] = recField
+			} else if index == 7 {
+				mapVals["End_time1"] = recField
+			} else if index == 10 {
+				mapVals["Start_time2"] = recField
+			} else if index == 11 {
+				mapVals["End_time2"] = recField
+			} else if index == 12 {
+				inSort, err := utils.StrToInt32(recField)
+				if err != nil {
+					return fmt.Errorf("Error occured on sort=%s field convertion from string to number. %v", row[12], err)
+				}
+				mapVals["sort"] = *inSort
+			}
 		}
 
-		if *inSort > 0 {
-			strTimeVal := row[6]
-			endTimeVal := row[7]
-			if strTimeVal != "null" && endTimeVal != "null" {
-				rt1 := models.Scheduletime{}
-				rt1.Sdc_Cd = *inSdcCode
-				rt1.Ln_Code = *inLineCd
-				rt1.Direction = models.Direction_GO
-				rt1.Sort = *inSort
-				timeVal := convertStrToTime(strTimeVal)
+		if mapVals["sort"].(int32) > 0 {
+			if mapVals["Start_time1"] != "null" && mapVals["End_time1"] != "null" {
+				var rtt = models.Scheduletime{}
+				mapper.MapStruct(mapVals, &rtt)
+				rtt.Direction = models.Direction_GO
+				timeVal := convertStrToTime(mapVals["Start_time1"].(string))
 				if timeVal != nil {
-					rt1.Start_time = models.OpswTime(*timeVal)
+					rtt.Start_time = models.OpswTime(*timeVal)
 				}
 
-				timeVal = convertStrToTime(endTimeVal)
+				timeVal = convertStrToTime(mapVals["End_time1"].(string))
 				if timeVal != nil {
-					rt1.End_time = models.OpswTime(*timeVal)
+					rtt.End_time = models.OpswTime(*timeVal)
 				}
-				s.HelpScheduletime = append(s.HelpScheduletime, rt1)
+				s.HelpScheduletime = append(s.HelpScheduletime, rtt)
 			}
 
-			strTimeVal = row[10]
-			endTimeVal = row[11]
-			if strTimeVal != "null" && endTimeVal != "null" {
-				rt2 := models.Scheduletime{}
-				rt2.Sdc_Cd = *inSdcCode
-				rt2.Ln_Code = *inLineCd
-				rt2.Direction = models.Direction_COME
-				rt2.Sort = *inSort
-				timeVal := convertStrToTime(strTimeVal)
+			if mapVals["Start_time2"] != "null" && mapVals["End_time2"] != "null" {
+				var rtt = models.Scheduletime{}
+				mapper.MapStruct(mapVals, &rtt)
+				rtt.Direction = models.Direction_COME
+				timeVal := convertStrToTime(mapVals["Start_time2"].(string))
 				if timeVal != nil {
-					rt2.Start_time = models.OpswTime(*timeVal)
+					rtt.Start_time = models.OpswTime(*timeVal)
 				}
 
-				timeVal = convertStrToTime(endTimeVal)
+				timeVal = convertStrToTime(mapVals["End_time2"].(string))
 				if timeVal != nil {
-					rt2.End_time = models.OpswTime(*timeVal)
+					rtt.End_time = models.OpswTime(*timeVal)
 				}
-				s.HelpScheduletime = append(s.HelpScheduletime, rt2)
+				s.HelpScheduletime = append(s.HelpScheduletime, rtt)
 			}
 		}
 	}

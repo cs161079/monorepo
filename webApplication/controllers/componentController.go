@@ -32,6 +32,24 @@ func NewComponentController(db *gorm.DB, svc service.LineService) ComponentContr
 func (u componentController) AddRouters(eng *gin.Engine) {
 	apiGroup := eng.Group("/comp/line")
 	apiGroup.GET("/cbs", u.LineCombo)
+	apiGroup.GET("/alt/list", u.MasteLineCombo)
+}
+
+func (t componentController) MasteLineCombo(ctx *gin.Context) {
+	start := time.Now()
+	line_id := ctx.Query("line_id")
+	if line_id == "" {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": "Query Parameter Master line code is not a valid number."})
+		return
+	}
+
+	comboRec, err := t.svc.AlternativeLinesList(line_id)
+	if err != nil {
+		models.HttpResponse(ctx, err)
+		return
+	}
+	var response map[string]interface{} = map[string]interface{}{"altLines": comboRec}
+	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": response})
 }
 
 func (t componentController) LineCombo(ctx *gin.Context) {

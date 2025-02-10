@@ -106,6 +106,8 @@ CREATE TABLE IF NOT EXISTS `schedulemaster` (
   `sdc_descr` varchar(50) DEFAULT NULL,
   `sdc_descr_eng` varchar(500) DEFAULT NULL,
   `sdc_code` int NOT NULL,
+  `sdc_days` varchar(7) DEFAULT NULL,
+  `sdc_months` varchar(12) DEFAULT NULL
   PRIMARY KEY (`id`),
   UNIQUE KEY `sdc_code_un` (`sdc_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

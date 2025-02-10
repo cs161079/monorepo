@@ -12,6 +12,7 @@ type ScheduleService interface {
 	InsertScheduleArray([]models.Schedule) ([]models.Schedule, error)
 	InsertScheduleChunkArray(chunkSize int, allData []models.Schedule) error
 	SelectByLineSdcCodeWithTimes(int32, int32) (*models.Schedule, error)
+	SelectCurrentSchedule(int32) (*models.Schedule, error)
 }
 
 type scheduleService struct {
@@ -66,4 +67,8 @@ func (s scheduleService) InsertScheduleChunkArray(chunkSize int, allData []model
 
 func (s scheduleService) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.Schedule, error) {
 	return s.repo.SelectByLineSdcCodeWithTimes(lineCode, sdcCode)
+}
+
+func (s scheduleService) SelectCurrentSchedule(linCode int32) (*models.Schedule, error) {
+	return s.repo.SelectCurrentSchedule(linCode)
 }

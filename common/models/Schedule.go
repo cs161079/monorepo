@@ -9,6 +9,8 @@ type Schedule struct {
 	Sdc_Descr        string         `json:"sdc_descr"`
 	Sdc_Descr_Eng    string         `json:"sdc_descr_eng"`
 	Sdc_Code         int32          `json:"sdc_code"`
+	Sdc_days         string         `json:"sdc_days"`
+	Sdc_months       string         `json:"sdc_months"`
 	Schedule_Details []Scheduletime `json:"times" gorm:"foreignKey:Sdc_Cd;references:Sdc_Code"`
 }
 

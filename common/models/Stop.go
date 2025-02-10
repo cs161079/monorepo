@@ -4,7 +4,7 @@ package models
 // ********* Database Entity **************
 type Stop struct {
 	Id               int64   `json:"Id" gorm:"primaryKey"`
-	Stop_code        int32   `json:"Stop_code" gorm:"index:STOP_CODE_UN,unique" oasa:"StopCode"`
+	Stop_code        int32   `json:"stop_code" gorm:"index:STOP_CODE_UN,unique" oasa:"StopCode"`
 	Stop_id          string  `json:"stop_id" oasa:"StopID"`
 	Stop_descr       string  `json:"stop_descr" oasa:"StopDescr"`
 	Stop_descr_eng   string  `json:"stop_descr_eng" oasa:"StopDescrEng"`

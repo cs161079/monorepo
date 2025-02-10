@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
@@ -21,6 +22,7 @@ type LineService interface {
 	InsertLine(line *models.Line) (*models.Line, error)
 	PostLine(line *models.Line) (*models.Line, error)
 	PostLineArray(context.Context, []models.Line) ([]models.Line, error)
+	AlternativeLinesList(string) ([]models.ComboRec, error)
 
 	GetMapper() mapper.LineMapper
 }
@@ -130,4 +132,18 @@ func (s lineService) InsertChunkArray(chunkSize int, allData []models.Line) erro
 		}
 	}
 	return nil
+}
+
+func (s lineService) AlternativeLinesList(line_id string) ([]models.ComboRec, error) {
+	var altLineList, err = s.repo.SelectAltLines(line_id)
+	if err != nil {
+		return nil, err
+	}
+	var result []models.ComboRec = make([]models.ComboRec, 0)
+	if len(altLineList) > 0 {
+		for _, rec := range altLineList {
+			result = append(result, models.ComboRec{Code: rec.Line_Code, Descr: strconv.Itoa(int(rec.Line_Code)) + "-" + rec.Line_Descr})
+		}
+	}
+	return result, nil
 }

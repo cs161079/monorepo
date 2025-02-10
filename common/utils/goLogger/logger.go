@@ -115,7 +115,7 @@ func (l *GormLogger) Info(ctx context.Context, str string, args ...interface{}) 
 		// Logger.Infof(str, args...)
 		logger.WithFields(logger.Fields{
 			"at": time.Now().Format("2006-01-02 15:04:05"),
-		}).Infof(str+"\n", args)
+		}).Infof("%s\n", str, args)
 	}
 }
 
@@ -125,7 +125,7 @@ func (l *GormLogger) Warn(ctx context.Context, str string, args ...interface{}) 
 		// Logger.Warnf(str, args...)
 		logger.WithFields(logger.Fields{
 			"at": time.Now().Format("2006-01-02 15:04:05"),
-		}).Warnf(str+"\n", args)
+		}).Warnf(str, args, "\n")
 	}
 
 }
@@ -137,7 +137,7 @@ func (l *GormLogger) Error(ctx context.Context, str string, args ...interface{})
 		//logger.WithFields(logger.Fields{
 		//	"at": time.Now().Format("2006-01-02 15:04:05"),
 		//}).Errorf(str+"\n", args)
-		logger.Error(str, args)
+		logger.Error(str, args, "\n")
 	}
 }
 
@@ -185,7 +185,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 
 func GetGormLogger() *GormLogger {
 	return &GormLogger{
-		LogLevel: gormlogger.Error,
+		LogLevel: gormlogger.Info,
 		Formatter: &easy.Formatter{
 			TimestampFormat: "2006-01-02 15:04:05",
 			LogFormat:       "[%lvl%]: %time% - %msg%",

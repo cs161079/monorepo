@@ -21,6 +21,7 @@ type RouteService interface {
 	Route01InsertChunkArray(chunkSize int, allData []models.Route01) error
 
 	SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error)
+	SelectRouteWithStops(int32) (*models.Route, error)
 }
 
 type routeService struct {
@@ -161,4 +162,8 @@ func (s routeService) DeleteRoute01() error {
 
 func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error) {
 	return s.repo.SelectByLineCodeWithStops(line_code)
+}
+
+func (s routeService) SelectRouteWithStops(routeCode int32) (*models.Route, error) {
+	return s.repo.SelectByRouteCodeWithStops(routeCode)
 }
