@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: oasa-telemat
+  name: mysql-migration
+spec:
+  template:
+    spec:
+      containers:
+        - name: mysql-migrate
+          image: mysql:latest
+          command:
+            - "/bin/bash"
+            - "-c"
+            - |
+              mysql -h mysql-svc -u root -p$MYSQL_ROOT_PASSWORD -e "source /var/db/config/oasa-telemat/alter/mysql-schema-alter.sql"
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: root-password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: database-name
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: password   
+          volumeMounts:
+          - mountPath: /var/db/config/oasa-telemat/alter
+            name: mysql-schema-alter-vol
+            subPath: entrypoint.sh   
+      restartPolicy: Never
+      volumes:
+      - name: mysql-schema-alter-vol
+        configMap:
+          name: mysql-schema-alter
+          defaultMode: 420
+          items:
+          - key: alter.sql
+            path: mysql-schema-alter.sql
+  backoffLimit: 1

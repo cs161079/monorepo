@@ -11,7 +11,6 @@ import (
 	"github.com/cs161079/monorepo/webApplication/controllers"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/go-errors/errors"
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
@@ -21,30 +20,15 @@ type App struct {
 	engine *gin.Engine
 }
 
+// ErrorHandler is a custom middleware for handling errors
+// When panic occured from programm ErrorHandler is here to catch it.
 func ErrorHandler(c *gin.Context, err any) {
-	// Wrap the error with stack trace
-	var wrappedErr error
-	switch e := err.(type) {
-	case error:
-		wrappedErr = errors.Wrap(e, 1)
-	default:
-		wrappedErr = errors.New("unknown error occurred")
-	}
-
-	// Log the error with context
-	logger.ERROR(fmt.Sprintln("Error occurred",
-		"error", wrappedErr.Error(),
-		"stack", wrappedErr.(*errors.Error).ErrorStack(),
-		"path", c.Request.URL.Path,
-		"method", c.Request.Method,
-		"clientIP", c.ClientIP(),
-	))
-	var httpResponse = map[string]any{"Message": "Internal server error", "Status": 500}
+	var httpResponse = map[string]any{"error": "Internal server error", "code": -1}
 	c.AbortWithStatusJSON(500, httpResponse)
 }
 
-func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation,
-	testCtrl controllers.TestController) *App {
+func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation, rtCtr controllers.RouteController,
+	schedCtrl controllers.ScheduleController, compCtrl controllers.ComponentController, testCtrl controllers.TestController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	eng.Use(cors.Default())
@@ -53,6 +37,9 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation,
 	eng.Use(gin.Logger(), gin.CustomRecovery(ErrorHandler))
 
 	lineCtrl.AddRouters(eng)
+	rtCtr.AddRouters(eng)
+	schedCtrl.AddRouters(eng)
+	compCtrl.AddRouters(eng)
 	testCtrl.AddRoutes(eng)
 
 	return &App{
@@ -65,7 +52,7 @@ func (a App) Boot() {
 	if port == "" {
 		port = "8080"
 	}
-	logger.Logger.Info("Application server start on port %s", port)
+	logger.INFO(fmt.Sprintf("Application server start on port %s", port))
 	a.engine.Run(fmt.Sprintf(":%s", port))
 }
 
@@ -75,11 +62,9 @@ func InitializeApplication() {
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
-	logger.InitLogger("WebApplication")
-	originalStdout := os.Stdout
+	logger.CreateLogger()
 
-	os.Stdout = logger.Logger.Out.(*os.File) // Set output destination
-	fmt.Printf(`
+	logger.Logger.Out.Write([]byte(fmt.Sprintf(`
   .    ___    _    ____    _       
  /\\  / _ \  / \  / ___|  / \    
 ( ( )| | | |/ _ \ \___ \ / _ \   
@@ -95,10 +80,7 @@ func InitializeApplication() {
                                                                                          
 
 
-:: OASA WEB APPLICATION (v1.0.0) ::
-
-`)
-	os.Stdout = originalStdout
+:: OASA WEB APPLICATION (v%s) :: `+"\n\n", os.Getenv("application.version"))))
 
 }
 
@@ -115,13 +97,16 @@ func BuildInRuntime() (*App, error) {
 		repository.NewScheduleRepository,
 		repository.NewStopRepository,
 		repository.NewUversionRepository,
-		service.NewLineService,
 		service.NewRouteService,
 		service.NewShedule01Service,
+		service.NewLineService,
 		service.NewSheduleService,
 		service.NewStopService,
 		service.NewuVersionService,
 		controllers.NewLineController,
+		controllers.NewRouteController,
+		controllers.NewScheduleController,
+		controllers.NewComponentController,
 		controllers.TestControllerConstructor,
 		NewApp,
 	}

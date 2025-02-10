@@ -1,6 +1,9 @@
 package repository
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -15,6 +18,9 @@ type ScheduleRepository interface {
 	InsertScheduleMaster(input models.Schedule) error
 	InsertScheduleMasterArray(input []models.Schedule) ([]models.Schedule, error)
 	DeleteScheduleMaster() error
+
+	SelectByLineSdcCodeWithTimes(int32, int32) (*models.Schedule, error)
+	SelectCurrentSchedule(int32) (*models.Schedule, error)
 }
 
 type scheduleRepository struct {
@@ -75,4 +81,41 @@ func (r scheduleRepository) InsertScheduleMasterArray(input []models.Schedule) (
 		return nil, res.Error
 	}
 	return input, nil
+}
+
+func (r scheduleRepository) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.Schedule, error) {
+	var result models.Schedule
+	dbResults := r.DB.Preload("Schedule_Details", func(db *gorm.DB) *gorm.DB {
+		return db.Where("ln_code = ?", lineCode).Order("sort")
+	}).Where("sdc_code=?", sdcCode).First(&result)
+
+	if dbResults.Error != nil {
+		return nil, fmt.Errorf("Database Error. [%s]", dbResults.Error.Error())
+	}
+
+	return &result, nil
+}
+
+func (r scheduleRepository) SelectCurrentSchedule(lineCode int32) (*models.Schedule, error) {
+	var result models.Schedule
+	var hlpArr []models.Schedule
+	dbResults := r.DB.Preload("Schedule_Details", func(db *gorm.DB) *gorm.DB {
+		return db.Where("ln_code = ?", lineCode).Order("sort")
+	}).Find(&hlpArr)
+
+	if dbResults.Error != nil {
+		return nil, fmt.Errorf("Database Error. [%s]", dbResults.Error.Error())
+	}
+
+	currentMonth := int(time.Now().Month())
+	currentDay := time.Now().Weekday()
+
+	for _, rec := range hlpArr {
+		if len(rec.Schedule_Details) != 0 && string(rec.Sdc_days[currentDay]) == "1" && string(rec.Sdc_months[currentMonth-1]) == "1" {
+			result = rec
+			return &result, nil
+		}
+	}
+
+	return &result, nil
 }

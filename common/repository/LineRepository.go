@@ -1,6 +1,10 @@
 package repository
 
 import (
+	"errors"
+	"fmt"
+	"net/http"
+
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -20,6 +24,7 @@ type LineRepository interface {
 	LineList01() ([]models.LineDto01, error)
 	DeleteAll() error
 	WithTx(*gorm.DB) lineRepository
+	SelectAltLines(string) ([]models.Line, error)
 }
 
 func NewLineRepository(connection *gorm.DB) LineRepository {
@@ -39,12 +44,24 @@ func (r lineRepository) WithTx(tx *gorm.DB) lineRepository {
 }
 
 func (r lineRepository) SelectByCode(lineCode int32) (*models.Line, error) {
-	var selectedVal models.Line
-	res := r.DB.Table(db.LINETABLE).Where("line_code = ?", lineCode).Find(&selectedVal)
-	if res.Error != nil {
-		return nil, res.Error
+	var result models.Line
+
+	// Query the database for the line with the provided code.
+	dbResults := r.DB.Table(db.LINETABLE).Where("line_code = ?", lineCode).First(&result)
+
+	// Check if the query was successful or if no rows were found.
+	if dbResults.Error != nil {
+		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
+			// No record found, return nil for the result with no error.
+			return nil, models.NewError(dbResults.Error.Error(),
+				fmt.Sprintf("No line found with code %d.", lineCode), http.StatusNotFound)
+		}
+		// Return any other errors that occurred.
+		return nil, dbResults.Error
 	}
-	return &selectedVal, nil
+
+	// Return the result if found.
+	return &result, nil
 }
 
 func (r lineRepository) Insert(line *models.Line) (*models.Line, error) {
@@ -86,4 +103,23 @@ func (r lineRepository) InsertArray(entityArr []models.Line) ([]models.Line, err
 		return nil, err
 	}
 	return entityArr, nil
+}
+
+func (r lineRepository) SelectAltLines(line_id string) ([]models.Line, error) {
+	var result []models.Line
+	dbResults := r.DB.Table(db.LINETABLE).Where("line_id=?", line_id).Order("line_code").Find(&result)
+	// Check if the query was successful or if no rows were found.
+	if dbResults.Error != nil {
+		// Return any other errors that occurred.
+		return nil, dbResults.Error
+	}
+	return result, nil
+}
+
+type MyError struct {
+	Message string
+}
+
+func (t MyError) Error() string {
+	return t.Message
 }

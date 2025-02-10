@@ -26,7 +26,7 @@ USE `oasa-telemat`;
 CREATE TABLE IF NOT EXISTS `line` (
   `id` int NOT NULL AUTO_INCREMENT,
   `ml_code` int DEFAULT NULL,
-  `sdc_code` int DEFAULT NULL,
+  `sdc_cd` int DEFAULT NULL,
   `line_code` int NOT NULL,
   `line_id` varchar(45) NOT NULL,
   `line_descr` varchar(100) DEFAULT NULL,
@@ -106,6 +106,8 @@ CREATE TABLE IF NOT EXISTS `schedulemaster` (
   `sdc_descr` varchar(50) DEFAULT NULL,
   `sdc_descr_eng` varchar(500) DEFAULT NULL,
   `sdc_code` int NOT NULL,
+  `sdc_days` varchar(7) DEFAULT NULL,
+  `sdc_months` varchar(12) DEFAULT NULL
   PRIMARY KEY (`id`),
   UNIQUE KEY `sdc_code_un` (`sdc_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

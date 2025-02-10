@@ -11,29 +11,31 @@ type ScheduleService interface {
 	DeleteAll() error
 	InsertScheduleArray([]models.Schedule) ([]models.Schedule, error)
 	InsertScheduleChunkArray(chunkSize int, allData []models.Schedule) error
+	SelectByLineSdcCodeWithTimes(int32, int32) (*models.Schedule, error)
+	SelectCurrentSchedule(int32) (*models.Schedule, error)
 }
 
 type scheduleService struct {
-	Repo repository.ScheduleRepository
+	repo repository.ScheduleRepository
 }
 
 func NewSheduleService(repo repository.ScheduleRepository) ScheduleService {
 	return scheduleService{
-		Repo: repo,
+		repo: repo,
 	}
 }
 
 func (s scheduleService) DeleteAll() error {
-	return s.Repo.DeleteAll()
+	return s.repo.DeleteAll()
 }
 
 func (s scheduleService) WithTrx(txtHandle *gorm.DB) scheduleService {
-	s.Repo = s.Repo.WithTx(txtHandle)
+	s.repo = s.repo.WithTx(txtHandle)
 	return s
 }
 
 func (s scheduleService) InsertScheduleArray(allData []models.Schedule) ([]models.Schedule, error) {
-	return s.Repo.InsertScheduleMasterArray(allData)
+	return s.repo.InsertScheduleMasterArray(allData)
 }
 
 func (s scheduleService) InsertScheduleChunkArray(chunkSize int, allData []models.Schedule) error {
@@ -61,4 +63,12 @@ func (s scheduleService) InsertScheduleChunkArray(chunkSize int, allData []model
 		}
 	}
 	return nil
+}
+
+func (s scheduleService) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.Schedule, error) {
+	return s.repo.SelectByLineSdcCodeWithTimes(lineCode, sdcCode)
+}
+
+func (s scheduleService) SelectCurrentSchedule(linCode int32) (*models.Schedule, error) {
+	return s.repo.SelectCurrentSchedule(linCode)
 }

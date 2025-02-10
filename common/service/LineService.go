@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
@@ -11,16 +12,19 @@ import (
 )
 
 type LineService interface {
-	SelectByLineCode(lineCode int32) (*models.Line, error)
-	InsertLine(line *models.Line) (*models.Line, error)
+	WithTrx(*gorm.DB) lineService
 	InsertArray([]models.Line) ([]models.Line, error)
 	InsertChunkArray(chunkSize int, allData []models.Line) error
+	DeleteAll() error
+	GetLineList() ([]models.LineDto01, error)
+	SelectByLineCode(lineCode int32) (*models.LineDto, error)
+
+	InsertLine(line *models.Line) (*models.Line, error)
 	PostLine(line *models.Line) (*models.Line, error)
 	PostLineArray(context.Context, []models.Line) ([]models.Line, error)
-	WithTrx(*gorm.DB) lineService
-	DeleteAll() error
+	AlternativeLinesList(string) ([]models.ComboRec, error)
+
 	GetMapper() mapper.LineMapper
-	GetLineList() ([]models.LineDto01, error)
 }
 type lineService struct {
 	repo   repository.LineRepository
@@ -38,8 +42,13 @@ func (s lineService) GetMapper() mapper.LineMapper {
 	return s.mapper
 }
 
-func (s lineService) SelectByLineCode(line_code int32) (*models.Line, error) {
-	return s.repo.SelectByCode(line_code)
+func (s lineService) SelectByLineCode(line_code int32) (*models.LineDto, error) {
+	line, err := s.repo.SelectByCode(line_code)
+	if err != nil {
+		return nil, err
+	}
+	var result = s.mapper.LineToDto(*line)
+	return &result, nil
 
 }
 
@@ -108,26 +117,33 @@ func (s lineService) InsertChunkArray(chunkSize int, allData []models.Line) erro
 	for {
 		_, err := s.InsertArray(allData[stratIndex:endIndex])
 		if err != nil {
-			// txt.Rollback()
-			//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη των γραμμών από %d έως %d.", stratIndex, endIndex-1))
 			return err
 		}
-		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
 		stratIndex = endIndex
 		endIndex = stratIndex + chunkSize
 		if stratIndex > len(allData)-1 {
-			//logger.INFO("Η εισαγωγή γραμμών ολοκληρώθηκε.")
 			break
 		} else if endIndex > len(allData)-1 {
 			_, err := s.InsertArray(allData[stratIndex:])
 			if err != nil {
-				//txt.Rollback()
-				//logger.ERROR(fmt.Sprintf("Σφάλμα κατά την προσθήκη των γραμμών από %d έως Τέλος.", stratIndex))
 				return err
 			}
 			break
 		}
-		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
 	}
 	return nil
+}
+
+func (s lineService) AlternativeLinesList(line_id string) ([]models.ComboRec, error) {
+	var altLineList, err = s.repo.SelectAltLines(line_id)
+	if err != nil {
+		return nil, err
+	}
+	var result []models.ComboRec = make([]models.ComboRec, 0)
+	if len(altLineList) > 0 {
+		for _, rec := range altLineList {
+			result = append(result, models.ComboRec{Code: rec.Line_Code, Descr: strconv.Itoa(int(rec.Line_Code)) + "-" + rec.Line_Descr})
+		}
+	}
+	return result, nil
 }
