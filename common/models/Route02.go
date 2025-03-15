@@ -12,3 +12,11 @@ type Route02 struct {
 func (Route02) TableName() string {
 	return "Route02"
 }
+
+type Route02Dto struct {
+	Stop_code  int32   `json:"stop_code"`
+	Stop_descr string  `json:"stop_descr"`
+	Stop_lat   float64 `json:"stop_lat"`
+	Stop_lng   float64 `json:"stop_lng"`
+	Senu       int16   `json:"stop_senu"`
+}

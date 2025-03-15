@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/cs161079/monorepo/common/db"
+	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/repository"
 	"github.com/cs161079/monorepo/common/service"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -27,8 +28,9 @@ func ErrorHandler(c *gin.Context, err any) {
 	c.AbortWithStatusJSON(500, httpResponse)
 }
 
-func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation, rtCtr controllers.RouteController,
-	schedCtrl controllers.ScheduleController, compCtrl controllers.ComponentController, testCtrl controllers.TestController) *App {
+func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.RouteController,
+	stopCtrl controllers.StopController, schedCtrl controllers.ScheduleController, compCtrl controllers.ComponentController,
+	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	eng.Use(cors.Default())
@@ -38,9 +40,11 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineControllerImplementation, rtCt
 
 	lineCtrl.AddRouters(eng)
 	rtCtr.AddRouters(eng)
+	stopCtrl.AddRouters(eng)
 	schedCtrl.AddRouters(eng)
 	compCtrl.AddRouters(eng)
 	testCtrl.AddRoutes(eng)
+	oasaCtrl.AddRouters(eng)
 
 	return &App{
 		engine: eng,
@@ -97,17 +101,23 @@ func BuildInRuntime() (*App, error) {
 		repository.NewScheduleRepository,
 		repository.NewStopRepository,
 		repository.NewUversionRepository,
+		mapper.NewOasaMapper,
 		service.NewRouteService,
 		service.NewShedule01Service,
 		service.NewLineService,
 		service.NewSheduleService,
 		service.NewStopService,
 		service.NewuVersionService,
+		service.NewNotificationService,
+		service.NewRestService,
+		service.NewOasaService,
 		controllers.NewLineController,
 		controllers.NewRouteController,
+		controllers.NewStopController,
 		controllers.NewScheduleController,
 		controllers.NewComponentController,
 		controllers.TestControllerConstructor,
+		controllers.NewOasaNativeController,
 		NewApp,
 	}
 

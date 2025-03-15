@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -53,10 +54,16 @@ func internalMapper(source map[string]interface{}, target interface{}) {
 				val, _ := utils.StrToInt64(sourceFieldVal)
 				v.Set(reflect.ValueOf(*val))
 			case reflect.Int32.String():
-				val, _ := utils.StrToInt32(sourceFieldVal)
+				val, err := utils.StrToInt32(sourceFieldVal)
+				if err != nil {
+					logger.WARN(fmt.Sprintf("ERROR ON CONVERT STR TO INT32 %s", err.Error()))
+				}
 				v.Set(reflect.ValueOf(*val))
 			case reflect.Int16.String():
-				val, _ := utils.StrToInt16(sourceFieldVal)
+				val, err := utils.StrToInt16(sourceFieldVal)
+				if err != nil {
+					logger.WARN(fmt.Sprintf("ERROR ON CONVERT STR TO INT16 %s", err.Error()))
+				}
 				v.Set(reflect.ValueOf(*val))
 			case reflect.Int8.String():
 				val, _ := utils.StrToInt8(sourceFieldVal)

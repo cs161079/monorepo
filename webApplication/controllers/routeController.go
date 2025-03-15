@@ -12,6 +12,7 @@ import (
 
 type RouteController interface {
 	stopListByRouteCode(*gin.Context)
+	routeDetails(*gin.Context)
 	AddRouters(*gin.Engine)
 }
 
@@ -28,7 +29,7 @@ func NewRouteController(routeSvc service.RouteService, stopSvc service.StopServi
 func (u RouteControllerImplementation) AddRouters(eng *gin.Engine) {
 	apiGroup := eng.Group("/routes")
 	apiGroup.GET("/stops", u.stopListByRouteCode)
-
+	apiGroup.GET("/details", u.routeDetails)
 }
 
 func (u RouteControllerImplementation) stopListByRouteCode(ctx *gin.Context) {
@@ -49,4 +50,30 @@ func (u RouteControllerImplementation) stopListByRouteCode(ctx *gin.Context) {
 	rt = *data
 
 	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": rt})
+}
+
+func (u RouteControllerImplementation) routeDetails(ctx *gin.Context) {
+	start := time.Now()
+	route_code, err := utils.StrToInt32(ctx.Query("code"))
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": "Query Parameter code is not a valid number."})
+		return
+	}
+
+	data, err := u.routeSvc.SelectRouteDetails(*route_code)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": err.Error()})
+		return
+	}
+
+	stops, err := u.routeSvc.SelectRouteStop(*route_code)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": map[string]any{
+		"details": data,
+		"stops":   stops,
+	}})
 }

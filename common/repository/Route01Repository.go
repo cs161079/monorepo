@@ -8,6 +8,7 @@ import (
 )
 
 type Route01Repository interface {
+	SelectByCode(int32) ([]models.Route01, error)
 	InsertRoute01Arr([]models.Route01) ([]models.Route01, error)
 	Delete() error
 }
@@ -17,7 +18,7 @@ type route01Repository struct {
 }
 
 func NewRoute01Repository(connection *gorm.DB) Route01Repository {
-	return route01Repository{
+	return &route01Repository{
 		DB: connection,
 	}
 }
@@ -36,4 +37,13 @@ func (r route01Repository) Delete() error {
 		return err
 	}
 	return nil
+}
+
+func (r route01Repository) SelectByCode(routeCode int32) ([]models.Route01, error) {
+	var result []models.Route01
+	dbResult := r.DB.Table(db.ROUTEDETAILTABLE).Where("rt_code=?", routeCode).Order("routed_order").Find(&result)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return result, nil
 }

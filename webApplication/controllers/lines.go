@@ -11,8 +11,10 @@ import (
 )
 
 type LineController interface {
+	AddRouters(eng *gin.Engine)
 	GetLineList(*gin.Context)
 	GetLineInfo(*gin.Context)
+	SearchLine(*gin.Context)
 }
 
 type LineControllerImplementation struct {
@@ -22,8 +24,8 @@ type LineControllerImplementation struct {
 }
 
 func NewLineController(svc service.LineService, routeSvc service.RouteService,
-	schedService service.ScheduleService) LineControllerImplementation {
-	return LineControllerImplementation{
+	schedService service.ScheduleService) LineController {
+	return &LineControllerImplementation{
 		svc:          svc,
 		routeSvc:     routeSvc,
 		schedService: schedService,
@@ -33,7 +35,8 @@ func NewLineController(svc service.LineService, routeSvc service.RouteService,
 func (u LineControllerImplementation) AddRouters(eng *gin.Engine) {
 	apiGroup := eng.Group("/lines")
 	apiGroup.GET("/list", u.GetLineList)
-	apiGroup.GET("/details", u.lineDetails)
+	apiGroup.GET("/details", u.GetLineInfo)
+	apiGroup.GET("/search", u.SearchLine)
 }
 
 func (u LineControllerImplementation) GetLineList(c *gin.Context) {
@@ -47,7 +50,7 @@ func (u LineControllerImplementation) GetLineList(c *gin.Context) {
 	})
 }
 
-func (t LineControllerImplementation) lineDetails(ctx *gin.Context) {
+func (t LineControllerImplementation) GetLineInfo(ctx *gin.Context) {
 	start := time.Now()
 	line_code, err := utils.StrToInt32(ctx.Query("code"))
 	if err != nil {
@@ -84,4 +87,20 @@ func (t LineControllerImplementation) lineDetails(ctx *gin.Context) {
 	line.Schedule = *schedule
 
 	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": line})
+}
+
+func (t LineControllerImplementation) SearchLine(ctx *gin.Context) {
+	start := time.Now()
+	searchText := ctx.Query("text")
+
+	result, err := t.svc.SearchLine(searchText)
+
+	if err != nil {
+		//ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})
+		models.HttpResponse(ctx, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, map[string]any{"duration": time.Since(start).Seconds(), "data": result})
+
 }

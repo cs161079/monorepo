@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
 
@@ -12,6 +13,8 @@ type StopService interface {
 	InsertChunkArray(chunkSize int, allData []models.Stop) error
 	DeleteAll() error
 	WithTrx(*gorm.DB) stopService
+	SelectByCode(int32) (*models.StopDtoBasicInfo, error)
+	SelectClosestStops02(latitude float64, longtitude float64) ([]models.StopDto, error)
 }
 
 type stopService struct {
@@ -66,4 +69,18 @@ func (s stopService) InsertChunkArray(chunkSize int, allData []models.Stop) erro
 		}
 	}
 	return nil
+}
+
+func (s stopService) SelectByCode(stop_code int32) (*models.StopDtoBasicInfo, error) {
+	var result models.StopDtoBasicInfo = models.StopDtoBasicInfo{}
+	stopPtr, err := s.repo.SelectByCode(stop_code)
+	if err != nil {
+		return nil, err
+	}
+	mapper.MapStruct(*stopPtr, &result)
+	return &result, nil
+}
+
+func (s stopService) SelectClosestStops02(latitude float64, longtitude float64) ([]models.StopDto, error) {
+	return s.repo.SelectClosestStops02(latitude, longtitude)
 }

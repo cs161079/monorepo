@@ -24,6 +24,7 @@ type LineService interface {
 	PostLineArray(context.Context, []models.Line) ([]models.Line, error)
 	AlternativeLinesList(string) ([]models.ComboRec, error)
 
+	SearchLine(string) ([]models.Line, error)
 	GetMapper() mapper.LineMapper
 }
 type lineService struct {
@@ -146,4 +147,8 @@ func (s lineService) AlternativeLinesList(line_id string) ([]models.ComboRec, er
 		}
 	}
 	return result, nil
+}
+
+func (t lineService) SearchLine(text string) ([]models.Line, error) {
+	return t.repo.SearchLine(text)
 }

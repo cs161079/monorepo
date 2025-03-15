@@ -22,6 +22,8 @@ type RouteService interface {
 
 	SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error)
 	SelectRouteWithStops(int32) (*models.Route, error)
+	SelectRouteDetails(int32) ([]models.Route01, error)
+	SelectRouteStop(int32) ([]models.Route02Dto, error)
 }
 
 type routeService struct {
@@ -34,7 +36,7 @@ type routeService struct {
 func NewRouteService(repo repository.RouteRepository,
 	repo01 repository.Route01Repository,
 	repo02 repository.Route02Repository) RouteService {
-	return routeService{
+	return &routeService{
 		repo:     repo,
 		repo02:   repo02,
 		repo01:   repo01,
@@ -166,4 +168,12 @@ func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code int32) (*mod
 
 func (s routeService) SelectRouteWithStops(routeCode int32) (*models.Route, error) {
 	return s.repo.SelectByRouteCodeWithStops(routeCode)
+}
+
+func (s routeService) SelectRouteDetails(routeCode int32) ([]models.Route01, error) {
+	return s.repo01.SelectByCode(routeCode)
+}
+
+func (s routeService) SelectRouteStop(routecode int32) ([]models.Route02Dto, error) {
+	return s.repo02.SelectRouteStops(routecode)
 }

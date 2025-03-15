@@ -2,6 +2,8 @@ package repository
 
 import (
 	"fmt"
+	"math"
+	"sort"
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
@@ -18,6 +20,7 @@ type StopRepository interface {
 	List01(int32) (*[]models.Stop, error)
 	DeleteAll() error
 	SelectClosestStops(float64, float64, float32, float32) ([]models.StopDto, error)
+	SelectClosestStops02(float64, float64) ([]models.StopDto, error)
 	WithTx(*gorm.DB) stopRepository
 }
 
@@ -109,4 +112,55 @@ func (r stopRepository) InsertArray(entityArray []models.Stop) ([]models.Stop, e
 		return nil, err
 	}
 	return entityArray, nil
+}
+
+// Haversine formula to calculate the great-circle distance between two points
+func haversine(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371 // Earth radius in km
+	dLat := (lat2 - lat1) * (math.Pi / 180.0)
+	dLon := (lon2 - lon1) * (math.Pi / 180.0)
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*(math.Pi/180.0))*math.Cos(lat2*(math.Pi/180.0))*
+			math.Sin(dLon/2)*math.Sin(dLon/2)
+
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return R * c
+}
+
+func (r stopRepository) SelectClosestStops02(latitude float64, longtitude float64) ([]models.StopDto, error) {
+	sqlDb, err := r.DB.DB()
+	if err != nil {
+		return nil, err
+	}
+	rows, err := sqlDb.Query("SELECT s.stop_code, s.stop_descr, s.stop_street, s.stop_lat, s.stop_lng FROM stop s")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stops []models.StopDto
+
+	for rows.Next() {
+		var stopDto models.StopDto
+		// var stop models.Stop
+		if err := rows.Scan(&stopDto.Stop_code, &stopDto.Stop_descr, &stopDto.Stop_street, &stopDto.Stop_lat, &stopDto.Stop_lng); err != nil {
+			continue
+		}
+		// mapper.MapStruct(stop, &stopDto)
+		stopDto.Distance = haversine(latitude, longtitude, stopDto.Stop_lat, stopDto.Stop_lng)
+		stops = append(stops, stopDto)
+
+	}
+
+	// Sort by distance
+	sort.Slice(stops, func(i, j int) bool {
+		return stops[i].Distance < stops[j].Distance
+	})
+
+	// Return the closest 10 stops
+	if len(stops) > 20 {
+		stops = stops[:20]
+	}
+	return stops, nil
 }

@@ -19,6 +19,7 @@ type RouteRepository interface {
 	Insert(models.Route) (*models.Route, error)
 	InsertArray([]models.Route) ([]models.Route, error)
 	Update(models.Route) (*models.Route, error)
+	ExtraArrivalInfo(int32) ([]models.StopArrival, error)
 	List01() ([]models.Route, error)
 	WithTx(*gorm.DB) routeRepository
 	DeleteAll() error
@@ -129,4 +130,16 @@ func (r routeRepository) InsertArray(entiryArr []models.Route) ([]models.Route, 
 		return nil, err
 	}
 	return entiryArr, nil
+}
+
+func (r routeRepository) ExtraArrivalInfo(stop_code int32) ([]models.StopArrival, error) {
+	var result []models.StopArrival
+	dbResult := r.DB.Select("route.route_code", "line.line_descr", "line.line_id").Table(db.ROUTESTOPSTABLE).Joins(
+		"LEFT JOIN route on route02.rt_code=route.route_code").Joins(
+		"LEFT JOIN line on route.ln_code=line.line_code").Where(
+		"route02.stp_code=?", stop_code).Find(&result)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return result, nil
 }

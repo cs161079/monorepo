@@ -10,6 +10,8 @@ import (
 	"reflect"
 	"strings"
 	"time"
+
+	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 )
 
 type RestService interface {
@@ -153,6 +155,10 @@ func (r restService) OasaRequestApi00(action string, extraParams map[string]inte
 
 	if err != nil {
 		oasaResult.Error = err
+		return &oasaResult
+	}
+	if (string(resp)) == "\"\"" {
+		logger.INFO(fmt.Sprintf("THIS IS STR RESPONSE %s", string(resp)))
 		return &oasaResult
 	}
 

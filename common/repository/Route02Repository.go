@@ -12,6 +12,7 @@ import (
 
 type Route02Repository interface {
 	SelectByCode(int32, int32, int16) (*models.Route02, error)
+	SelectRouteStops(int32) ([]models.Route02Dto, error)
 	DeleteStopByRoute(int32) error
 	InsertRoute02(models.Route02) error
 	InsertRoute02Arr([]models.Route02) error
@@ -82,4 +83,13 @@ func (r route02Repository) InsertRoute02Arr(entityArr []models.Route02) error {
 		return res.Error
 	}
 	return nil
+}
+
+func (r route02Repository) SelectRouteStops(routeCode int32) ([]models.Route02Dto, error) {
+	var result []models.Route02Dto
+	dbResult := r.DB.Select("stop.stop_code, stop.stop_descr, stop.stop_lat, stop.stop_lng, route02.senu").Table(db.ROUTESTOPSTABLE).Joins("LEFT JOIN stop on route02.stp_code=stop.stop_code").Where("route02.rt_code=?", routeCode).Order("route02.senu").Find(&result)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return result, nil
 }
