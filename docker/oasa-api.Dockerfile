@@ -1,4 +1,4 @@
-FROM golang:1.20
+FROM golang:1.22-alpine
 
 # Set Go environment variables
 # Set environment variables
@@ -10,15 +10,17 @@ ENV GO111MODULE=on \
     
 WORKDIR /app
 
-RUN mkdir common api
+RUN mkdir common webApplication webApplication/config webApplication/controllers
 
 COPY common/ common/
-COPY api/ api/
+# COPY api/ api/
+COPY webApplication/config webApplication/config
+COPY webApplication/controllers webApplication/controllers
 
 COPY go.sum go.sum
 COPY go.mod go.mod
-COPY main_api.go main.go
-COPY .env .
+COPY webApplication/main.go .
+COPY webApplication/.env .
 
 RUN go mod download
 

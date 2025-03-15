@@ -4,17 +4,17 @@ metadata:
   name: oasa-cronjob
   namespace: oasa-telemat
 spec:
-  schedule: "*/5 * * * *"  # Run every 1 minutes
+  schedule: "*/30 * * * *"  # Runs every day at 21pm
   jobTemplate:
     spec:
       template:
         spec:
           containers:
           - name: oasa-job-container
-            image: localhost:5000/oasa_job:latest
+            image: localhost:5000/oasa-job:0.0.1
             envFrom:
             - configMapRef:
-                name: enviroment-config
+                name: enviroment-config-job
           restartPolicy: Never
           initContainers:
           - name: wait-for-mysql-pod

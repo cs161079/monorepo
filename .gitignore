@@ -1,7 +1,10 @@
 .vscode/settings.json
 .vscode/launch.json
 go.sum
+cronjob/bin/executable_go
+go.sum
 
 cronjob/tmp
 webApplication/__debug_bin3873649647.exe
+go.sum
 go.sum

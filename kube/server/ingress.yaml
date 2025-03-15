@@ -3,17 +3,22 @@ kind: Ingress
 metadata:
   name: api-ingress
   namespace: oasa-telemat
-  annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+  # annotations:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: oasa-telemat.com
+  - host: api.opsw.gr
     http:
       paths:
-      - path: /
+      - path: /lines
         pathType: Prefix
         backend:
           service:
             name: oasa-server-svc
             port:
               number: 80
+  tls: 
+    - 
+      hosts: 
+        - api.opsw.gr
+      secretName: tls-secret

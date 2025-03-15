@@ -5,10 +5,13 @@ go 1.22.7
 toolchain go1.23.4
 
 require (
+	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-errors/errors v1.5.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/t-tomalak/logrus-easy-formatter v0.0.0-20190827215021-c074f06c5816
 	go.uber.org/dig v1.18.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/gorm v1.25.9
 )
 
@@ -18,8 +21,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
-	github.com/gin-contrib/cors v1.7.2 // indirect
-	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
@@ -40,7 +41,7 @@ require (
 	google.golang.org/api v0.220.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250207221924-e9438ea467c6 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
 )
 
 require (
