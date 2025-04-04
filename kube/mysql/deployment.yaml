@@ -1,4 +1,4 @@
----
+# ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,17 +10,17 @@ data:
   entrypoint.sh: |-
     #!/bin/bash
     
-    while ! mysqladmin ping -h"127.0.0.1" --silent; do
+    while ! mysqladmin ping -u root --silent; do
         echo "🟠 Wait for MySQL to be ready..."
         sleep 1
     done
     
     echo "🟢 MySQL is ready."
     echo "🟦 Current user: $(whoami)"
+
+    mysql -u root -e "source /var/db/config/oasa-telemat/mysql-schema-config.sql"
     
     export MYSQL_PWD=$(echo $MYSQL_ROOT_PASSWORD)
-    
-    mysql -u root -e "source /var/db/config/oasa-telemat/mysql-schema-config.sql"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -41,6 +41,15 @@ spec:
     spec:
       containers:
       - name: mysql
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+            ephemeral-storage: "500Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+            ephemeral-storage: "1Gi"
         image: mysql:8.0-debian
         env:
           - name: MYSQL_ROOT_PASSWORD
@@ -62,7 +71,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: mysql-secret
-                key: password      
+                key: password 
         ports:
           - containerPort: 3306
         volumeMounts:
@@ -82,7 +91,7 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 60
           timeoutSeconds: 15
-          failureThreshold: 3
+          failureThreshold: 2
         lifecycle:
           postStart:
             exec:
@@ -97,7 +106,7 @@ spec:
           name: mysql-schema-config
           defaultMode: 420
           items:
-          - key: schema.sql
+          - key: schema_v2.sql
             path: mysql-schema-config.sql
       - name: configmap-entry-vol
         configMap:

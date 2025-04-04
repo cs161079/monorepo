@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -75,8 +74,8 @@ type syncService struct {
 	HelpRoute01      []models.Route01
 	HelpRoute02      []models.Route02
 	HelpStop         []models.Stop
-	HelpSchedule     []models.Schedule
-	HelpScheduletime []models.Scheduletime
+	HelpSchedule     []models.ScheduleMaster
+	HelpScheduletime []models.ScheduleTime
 	// HelpScheduleline  []models.Scheduleline
 	dbConnection      *gorm.DB
 	restService       service.RestService
@@ -400,12 +399,12 @@ func (s *syncService) syncRoutes() error {
 	}
 
 	// Create or overwrite the file (if it exists)
-	file, err := os.Create("tmp/routes.txt")
-	if err != nil {
-		//fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close() // Make sure to close the file when done
+	// file, err := os.Create("tmp/routes.txt")
+	// if err != nil {
+	// 	//fmt.Println("Error creating file:", err)
+	// 	return err
+	// }
+	// defer file.Close() // Make sure to close the file when done
 
 	// Δεν θα χρησιμοποιήσουμε τοπικό πίνακα
 	// var routeArray []models.Route = make([]models.Route, 0)
@@ -413,7 +412,7 @@ func (s *syncService) syncRoutes() error {
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
-		fmt.Fprintf(file, "%s\n", rec)
+		// fmt.Fprintf(file, "%s\n", rec)
 
 		// ************** Κάθε γραμμή την κάνω Split με το κόμμα και γεμίζω τα Record των διαδρομών **************
 		// ************************* Έλεγχος της γραμμής εάν έχει όλη την πληροφορία *****************************
@@ -426,25 +425,25 @@ func (s *syncService) syncRoutes() error {
 		if err != nil {
 			return err
 		}
-		rt.Ln_Code = *num
+		rt.LnCode = *num
 		num, err = utils.StrToInt32(recordArr[0])
 		if err != nil {
 			return err
 		}
-		rt.Route_Code = *num
-		if _, ok := s.routeKeys[rt.Route_Code]; !ok {
-			s.routeKeys[rt.Route_Code] = rt.Route_Code
+		rt.RouteCode = *num
+		if _, ok := s.routeKeys[rt.RouteCode]; !ok {
+			s.routeKeys[rt.RouteCode] = rt.RouteCode
 		}
 
-		rt.Route_Descr = recordArr[2]
-		rt.Route_Descr_eng = recordArr[3]
+		rt.RouteDescr = recordArr[2]
+		rt.RouteDescrEng = recordArr[3]
 		num, err = utils.StrToInt32(recordArr[4])
 		if err != nil {
 			return err
 		}
-		rt.Route_Type = int8(*num)
+		rt.RouteType = int8(*num)
 		fl32 := utils.StrToFloat32(recordArr[5])
-		rt.Route_Distance = fl32
+		rt.RouteDistance = fl32
 
 		s.HelpRoute = append(s.HelpRoute, rt)
 	}
@@ -466,12 +465,12 @@ func (s *syncService) syncStops() error {
 	}
 
 	// Create or overwrite the file (if it exists)
-	file, err := os.Create("tmp/stops.txt")
-	if err != nil {
-		//fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close() // Make sure to close the file when done
+	// file, err := os.Create("tmp/stops.txt")
+	// if err != nil {
+	// 	//fmt.Println("Error creating file:", err)
+	// 	return err
+	// }
+	// defer file.Close() // Make sure to close the file when done
 
 	s.HelpStop = make([]models.Stop, 0)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
@@ -479,7 +478,7 @@ func (s *syncService) syncStops() error {
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
-		fmt.Fprintf(file, "%s\n", rec)
+		// fmt.Fprintf(file, "%s\n", rec)
 
 		// ************** Κάθε γραμμή την κάνω Split με το κόμμα και γεμίζω τα Record των στάσεων **************
 		// ************************* Έλεγχος της γραμμής εάν έχει όλη την πληροφορία *****************************
@@ -492,31 +491,31 @@ func (s *syncService) syncStops() error {
 		if err != nil {
 			return err
 		}
-		st.Stop_code = *num32
-		st.Stop_id = recordArr[1]
-		st.Stop_descr = recordArr[2]
-		st.Stop_descr_eng = recordArr[3]
-		st.Stop_street = recordArr[4]
-		st.Stop_street_eng = recordArr[5]
+		st.StopCode = *num32
+		st.StopID = recordArr[1]
+		st.StopDescr = recordArr[2]
+		st.StopDescr = recordArr[3]
+		st.StopStreet = recordArr[4]
+		st.StopStreetEng = recordArr[5]
 		num32, err = utils.StrToInt32(recordArr[6])
 		if err != nil {
 			return err
 		}
-		st.Stop_heading = *num32
-		st.Stop_lng = utils.StrToFloat(recordArr[7])
-		st.Stop_lat = utils.StrToFloat(recordArr[8])
+		st.StopHeading = *num32
+		st.StopLng = utils.StrToFloat(recordArr[7])
+		st.StopLat = utils.StrToFloat(recordArr[8])
 		num8, err := utils.StrToInt8(recordArr[9])
 		if err != nil {
 			return err
 		}
-		st.Stop_type = *num8
+		st.StopType = *num8
 		num8, err = utils.StrToInt8(recordArr[10])
 		if err != nil {
 			return err
 		}
-		st.Stop_amea = *num8
+		st.StopAmea = *num8
 		st.Destinations = recordArr[11]
-		st.Destinations_Eng = recordArr[12]
+		st.DestinationsEng = recordArr[12]
 
 		s.HelpStop = append(s.HelpStop, st)
 
@@ -543,19 +542,19 @@ func (s *syncService) syncRouteStops() error {
 	}
 
 	// Create or overwrite the file (if it exists)
-	file, err := os.Create("tmp/route_stops.txt")
-	if err != nil {
-		//fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close() // Make sure to close the file when done
+	// file, err := os.Create("tmp/route_stops.txt")
+	// if err != nil {
+	// 	//fmt.Println("Error creating file:", err)
+	// 	return err
+	// }
+	// defer file.Close() // Make sure to close the file when done
 
 	s.HelpRoute02 = make([]models.Route02, 0)
 	logger.INFO("Get Stops per Route data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
-		fmt.Fprintf(file, "%s\n", rec)
+		// fmt.Fprintf(file, "%s\n", rec)
 
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(4) {
@@ -567,13 +566,13 @@ func (s *syncService) syncRouteStops() error {
 		if err != nil {
 			return err
 		}
-		rt.Rt_code = *num32
-		if _, ok := s.routeKeys[rt.Rt_code]; ok {
+		rt.RtCode = *num32
+		if _, ok := s.routeKeys[rt.RtCode]; ok {
 			num32, err := utils.StrToInt32(row[2])
 			if err != nil {
 				return err
 			}
-			rt.Stp_code = *num32
+			rt.StpCode = *num32
 			num16, err := utils.StrToInt16(row[3])
 			if err != nil {
 				return err
@@ -601,18 +600,18 @@ func (s *syncService) syncRouteDetails() error {
 	}
 
 	// Create or overwrite the file (if it exists)
-	file, err := os.Create("tmp/route_details.txt")
-	if err != nil {
-		//fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close() // Make sure to close the file when done
+	// file, err := os.Create("tmp/route_details.txt")
+	// if err != nil {
+	// 	//fmt.Println("Error creating file:", err)
+	// 	return err
+	// }
+	// defer file.Close() // Make sure to close the file when done
 
 	s.HelpRoute01 = make([]models.Route01, 0)
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
-		fmt.Fprintf(file, "%s\n", rec)
+		// fmt.Fprintf(file, "%s\n", rec)
 
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(5) {
@@ -624,17 +623,17 @@ func (s *syncService) syncRouteDetails() error {
 		if err != nil {
 			return err
 		}
-		rt.Rt_code = *num32
-		if _, ok := s.routeKeys[rt.Rt_code]; ok {
+		rt.RtCode = *num32
+		if _, ok := s.routeKeys[rt.RtCode]; ok {
 			num16, err := utils.StrToInt16(row[2])
 			if err != nil {
 				return err
 			}
-			rt.Routed_order = *num16
-			fl32 := utils.StrToFloat32(row[3])
-			rt.Routed_x = fl32
-			fl32 = utils.StrToFloat32(row[4])
-			rt.Routed_y = fl32
+			rt.RoutedOrder = *num16
+			fl32 := utils.StrToFloat(row[3])
+			rt.RoutedX = fl32
+			fl32 = utils.StrToFloat(row[4])
+			rt.RoutedY = fl32
 
 			s.HelpRoute01 = append(s.HelpRoute01, rt)
 		}
@@ -663,25 +662,25 @@ func (s *syncService) syncScheduleMaster() error {
 	}
 
 	// Create or overwrite the file (if it exists)
-	file, err := os.Create("tmp/schedule_master.txt")
-	if err != nil {
-		//fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close() // Make sure to close the file when done
+	// file, err := os.Create("tmp/schedule_master.txt")
+	// if err != nil {
+	// 	//fmt.Println("Error creating file:", err)
+	// 	return err
+	// }
+	// defer file.Close() // Make sure to close the file when done
 
-	s.HelpSchedule = make([]models.Schedule, 0)
+	s.HelpSchedule = make([]models.ScheduleMaster, 0)
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
-		fmt.Fprintf(file, "%s\n", rec)
+		// fmt.Fprintf(file, "%s\n", rec)
 
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(5) {
 			return fmt.Errorf("Data is missing for Master Schedule.")
 		}
 
-		rt := models.Schedule{}
+		rt := models.ScheduleMaster{}
 		for index, recField := range row {
 			recField = strings.TrimSpace(recField)
 			if index == 0 {
@@ -689,15 +688,15 @@ func (s *syncService) syncScheduleMaster() error {
 				if err != nil {
 					return err
 				}
-				rt.Sdc_Code = *num32
+				rt.SDCCode = *num32
 			} else if index == 1 {
-				rt.Sdc_Descr = recField
+				rt.SDCDescr = recField
 			} else if index == 2 {
-				rt.Sdc_Descr_Eng = recField
+				rt.SDCDescrEng = recField
 			} else if index == 3 {
-				rt.Sdc_days = recField
+				rt.SDCDays = recField
 			} else if index == 4 {
-				rt.Sdc_months = recField
+				rt.SDCMonths = recField
 			}
 		}
 		s.HelpSchedule = append(s.HelpSchedule, rt)
@@ -730,18 +729,18 @@ func (s *syncService) syncScheduleTime() error {
 	}
 
 	// Create or overwrite the file (if it exists)
-	file, err := os.Create("tmp/schedule_times.txt")
-	if err != nil {
-		//fmt.Println("Error creating file:", err)
-		return err
-	}
-	defer file.Close() // Make sure to close the file when done
+	// file, err := os.Create("tmp/schedule_times.txt")
+	// if err != nil {
+	// 	//fmt.Println("Error creating file:", err)
+	// 	return err
+	// }
+	// defer file.Close() // Make sure to close the file when done
 
-	s.HelpScheduletime = make([]models.Scheduletime, 0)
+	s.HelpScheduletime = make([]models.ScheduleTime, 0)
 	logger.INFO("Get Schedule time entries data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
-		fmt.Fprintf(file, "%s\n", rec)
+		// fmt.Fprintf(file, "%s\n", rec)
 
 		row := strings.Split(recPreparation(rec), ",")
 		if len(row) < int(13) {
@@ -792,33 +791,33 @@ func (s *syncService) syncScheduleTime() error {
 
 		if mapVals["sort"].(int32) > 0 {
 			if mapVals["Start_time1"] != "null" && mapVals["End_time1"] != "null" {
-				var rtt = models.Scheduletime{}
+				var rtt = models.ScheduleTime{}
 				mapper.MapStruct(mapVals, &rtt)
 				rtt.Direction = models.Direction_GO
 				timeVal := convertStrToTime(mapVals["Start_time1"].(string))
 				if timeVal != nil {
-					rtt.Start_time = models.OpswTime(*timeVal)
+					rtt.StartTime = models.OpswTime(*timeVal)
 				}
 
 				timeVal = convertStrToTime(mapVals["End_time1"].(string))
 				if timeVal != nil {
-					rtt.End_time = models.OpswTime(*timeVal)
+					rtt.EndTime = models.OpswTime(*timeVal)
 				}
 				s.HelpScheduletime = append(s.HelpScheduletime, rtt)
 			}
 
 			if mapVals["Start_time2"] != "null" && mapVals["End_time2"] != "null" {
-				var rtt = models.Scheduletime{}
+				var rtt = models.ScheduleTime{}
 				mapper.MapStruct(mapVals, &rtt)
 				rtt.Direction = models.Direction_COME
 				timeVal := convertStrToTime(mapVals["Start_time2"].(string))
 				if timeVal != nil {
-					rtt.Start_time = models.OpswTime(*timeVal)
+					rtt.StartTime = models.OpswTime(*timeVal)
 				}
 
 				timeVal = convertStrToTime(mapVals["End_time2"].(string))
 				if timeVal != nil {
-					rtt.End_time = models.OpswTime(*timeVal)
+					rtt.EndTime = models.OpswTime(*timeVal)
 				}
 				s.HelpScheduletime = append(s.HelpScheduletime, rtt)
 			}

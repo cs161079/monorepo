@@ -7,11 +7,13 @@ import (
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/mapper"
+	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
 	"github.com/cs161079/monorepo/common/service"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
+	"gorm.io/gorm"
 )
 
 type App struct {
@@ -19,7 +21,8 @@ type App struct {
 	syncService SyncService
 }
 
-func NewApp(logger logger.OpswLogger, syncSrv SyncService) *App {
+func NewApp(db *gorm.DB, logger logger.OpswLogger, syncSrv SyncService) *App {
+	db.AutoMigrate(&models.Line{}, &models.Route{}, &models.Stop{}, &models.Route01{}, &models.Route02{}, &models.ScheduleMaster{}, &models.ScheduleTime{})
 	return &App{
 		logger:      logger,
 		syncService: syncSrv,

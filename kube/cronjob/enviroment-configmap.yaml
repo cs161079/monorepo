@@ -8,6 +8,6 @@ data:
   database.dbname: oasa-telemat
   database.user: mysql-user
   database.password: YourPassword$@
-  application.name: cronJobApp
+  application.name: oasa
   application.logs.path: /var/log
   application.mode: PROD

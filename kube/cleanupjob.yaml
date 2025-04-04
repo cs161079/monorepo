@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cleanup-bad-pods
+  namespace: default  # Change namespace if needed
+spec:
+  schedule: "*/10 * * * *"  # Runs every 10 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: kubectl
+            image: bitnami/kubectl
+            command:
+            - /bin/sh
+            - -c
+            - |
+              kubectl delete pod --field-selector=status.phase=Failed
+              kubectl delete pod --field-selector=status.phase=Unknown
+              kubectl delete pod --field-selector=status.reason=Evicted
+          restartPolicy: OnFailure

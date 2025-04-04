@@ -10,10 +10,10 @@ import (
 
 type Schedule01Repository interface {
 	WithTx(tx *gorm.DB) schedule01Repository
-	SelectScheduleTime(lineCode int64, sdcCode int32) ([]models.Scheduletime, error)
-	SelectSchedule01ByKey(lineCode int64, sdcCode int32, tTime string, typ int) ([]models.Scheduletime, error)
-	InsertSchedule01(input models.Schedule) error
-	InsterSchedule01Array(input []models.Scheduletime) ([]models.Scheduletime, error)
+	SelectScheduleTime(lineCode int64, sdcCode int32) ([]models.ScheduleTime, error)
+	SelectSchedule01ByKey(lineCode int64, sdcCode int32, tTime string, typ int) ([]models.ScheduleTime, error)
+	InsertSchedule01(input models.ScheduleTime) error
+	InsterSchedule01Array(input []models.ScheduleTime) ([]models.ScheduleTime, error)
 	DeleteAll() error
 }
 
@@ -36,9 +36,9 @@ func (r schedule01Repository) WithTx(tx *gorm.DB) schedule01Repository {
 	return r
 }
 
-func (r schedule01Repository) SelectScheduleTime(lineCode int64, sdcCode int32) ([]models.Scheduletime, error) {
+func (r schedule01Repository) SelectScheduleTime(lineCode int64, sdcCode int32) ([]models.ScheduleTime, error) {
 	//var selectedPtr *oasaSyncModel.Busline
-	var selectedVal []models.Scheduletime
+	var selectedVal []models.ScheduleTime
 	res := r.DB.Table(db.SCHEDULETIMETABLE).Where("line_code = ? and sdc_code = ?", lineCode, sdcCode).Find(&selectedVal)
 	if res.Error != nil {
 		return nil, res.Error
@@ -46,9 +46,9 @@ func (r schedule01Repository) SelectScheduleTime(lineCode int64, sdcCode int32) 
 	return selectedVal, nil
 }
 
-func (r schedule01Repository) SelectSchedule01ByKey(lineCode int64, sdcCode int32, tTime string, typ int) ([]models.Scheduletime, error) {
+func (r schedule01Repository) SelectSchedule01ByKey(lineCode int64, sdcCode int32, tTime string, typ int) ([]models.ScheduleTime, error) {
 	//var selectedPtr *oasaSyncModel.Busline
-	var selectedVal []models.Scheduletime
+	var selectedVal []models.ScheduleTime
 	res := r.DB.Table(db.SCHEDULETIMETABLE).Where("line_code = ? and sdc_code = ? and start_time = ? and type = ?", lineCode, sdcCode, tTime, typ).Find(&selectedVal)
 	if res.Error != nil {
 		return nil, res.Error
@@ -56,7 +56,7 @@ func (r schedule01Repository) SelectSchedule01ByKey(lineCode int64, sdcCode int3
 	return selectedVal, nil
 }
 
-func (r schedule01Repository) InsertSchedule01(input models.Schedule) error {
+func (r schedule01Repository) InsertSchedule01(input models.ScheduleTime) error {
 	res := r.DB.Table(db.SCHEDULETIMETABLE).Create(&input)
 	if res.Error != nil {
 		return res.Error
@@ -64,7 +64,7 @@ func (r schedule01Repository) InsertSchedule01(input models.Schedule) error {
 	return nil
 }
 
-func (r schedule01Repository) InsterSchedule01Array(input []models.Scheduletime) ([]models.Scheduletime, error) {
+func (r schedule01Repository) InsterSchedule01Array(input []models.ScheduleTime) ([]models.ScheduleTime, error) {
 	res := r.DB.Table(db.SCHEDULETIMETABLE).Save(input)
 	if res.Error != nil {
 		return nil, res.Error
@@ -73,7 +73,7 @@ func (r schedule01Repository) InsterSchedule01Array(input []models.Scheduletime)
 }
 
 func (r schedule01Repository) DeleteAll() error {
-	if err := r.DB.Table(db.SCHEDULETIMETABLE).Where("1=1").Delete(&models.Scheduletime{}).Error; err != nil {
+	if err := r.DB.Table(db.SCHEDULETIMETABLE).Where("1=1").Delete(&models.ScheduleTime{}).Error; err != nil {
 		//trans.Rollback()
 		return err
 	}

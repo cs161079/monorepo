@@ -5,9 +5,12 @@ metadata:
   namespace: kube-system
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
+  ingressClassName: nginx
   rules:
-  - host: admin.opsw.gr
+  - host: admin.opsw.gr  # Change this to your actual domain
     http:
       paths:
       - path: /

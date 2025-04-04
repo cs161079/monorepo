@@ -1,26 +1,47 @@
 package models
 
+import "github.com/cs161079/monorepo/common/db"
+
 // ********* Struct for Stop **************
 // ********* Database Entity **************
+// type Stop struct {
+// 	Id               int64   `json:"Id" gorm:"primaryKey"`
+// 	Stop_code        int32   `json:"stop_code" gorm:"index:STOP_CODE_UN,unique"`
+// 	Stop_id          string  `json:"stop_id"`
+// 	Stop_descr       string  `json:"stop_descr"`
+// 	Stop_descr_eng   string  `json:"stop_descr_eng"`
+// 	Stop_street      string  `json:"stop_street"`
+// 	Stop_street_eng  string  `json:"stop_street_eng"`
+// 	Stop_heading     int32   `json:"stop_heading"`
+// 	Stop_lat         float64 `json:"stop_lat"`
+// 	Stop_lng         float64 `json:"stop_lng"`
+// 	Stop_type        int8    `json:"stop_type"`
+// 	Stop_amea        int8    `json:"stop_amea"`
+// 	Destinations     string  `json:"destinations"`
+// 	Destinations_Eng string  `json:"destinations_eng"`
+// }
+
 type Stop struct {
-	Id               int64   `json:"Id" gorm:"primaryKey"`
-	Stop_code        int32   `json:"stop_code" gorm:"index:STOP_CODE_UN,unique" oasa:"StopCode"`
-	Stop_id          string  `json:"stop_id" oasa:"StopID"`
-	Stop_descr       string  `json:"stop_descr" oasa:"StopDescr"`
-	Stop_descr_eng   string  `json:"stop_descr_eng" oasa:"StopDescrEng"`
-	Stop_street      string  `json:"stop_street" oasa:"StopStreet"`
-	Stop_street_eng  string  `json:"stop_street_eng" oasa:"StopStreetEng"`
-	Stop_heading     int32   `json:"stop_heading" oasa:"StopHeading"`
-	Stop_lat         float64 `json:"stop_lat" oasa:"StopLat"`
-	Stop_lng         float64 `json:"stop_lng" oasa:"StopLng"`
-	Stop_type        int8    `json:"stop_type" oasa:"StopType"`
-	Stop_amea        int8    `json:"stop_amea" oasa:"StopAmea"`
-	Destinations     string  `json:"destinations"`
-	Destinations_Eng string  `json:"destinations_eng"`
+	ID              int     `json:"id" gorm:"primaryKey"`
+	StopCode        int32   `json:"stop_code" gorm:"column:stop_code;uniqueIndex"`
+	StopID          string  `json:"stop_id" gorm:"column:stop_id"`
+	StopDescr       string  `json:"stop_descr" gorm:"column:stop_descr"`
+	StopDescrEng    string  `json:"stop_descr_eng" gorm:"column:stop_descr_eng"`
+	StopStreet      string  `json:"stop_street" gorm:"column:stop_street"`
+	StopStreetEng   string  `json:"stop_street_eng" gorm:"column:stop_street_eng"`
+	StopHeading     int32   `json:"stop_heading" gorm:"column:stop_heading"`
+	StopLat         float64 `json:"stop_lat" gorm:"column:stop_lat"`
+	StopLng         float64 `json:"stop_lng" gorm:"column:stop_lng"`
+	StopType        int8    `json:"stop_type" gorm:"column:stop_type"`
+	StopAmea        int8    `json:"stop_amea" gorm:"column:stop_amea"`
+	Destinations    string  `json:"destinations" gorm:"column:destinations"`
+	DestinationsEng string  `json:"destinations_eng" gorm:"column:destinations_eng"`
+
+	RouteStops []Route02 `json:"route_stops" gorm:"foreignKey:StpCode;references:StopCode"`
 }
 
 func (Stop) TableName() string {
-	return "stop"
+	return db.STOPTABLE
 }
 
 type StopOasa struct {

@@ -9,8 +9,8 @@ import (
 type Schedule01Service interface {
 	WithTrx(*gorm.DB) schedule01Service
 	DeleteAll() error
-	InsertArray(allData []models.Scheduletime) ([]models.Scheduletime, error)
-	InsertSchedule01ChunkArray(chunkSize int, allData []models.Scheduletime) error
+	InsertArray(allData []models.ScheduleTime) ([]models.ScheduleTime, error)
+	InsertSchedule01ChunkArray(chunkSize int, allData []models.ScheduleTime) error
 }
 
 type schedule01Service struct {
@@ -32,11 +32,11 @@ func (s schedule01Service) WithTrx(txtHandle *gorm.DB) schedule01Service {
 	return s
 }
 
-func (s schedule01Service) InsertArray(allData []models.Scheduletime) ([]models.Scheduletime, error) {
+func (s schedule01Service) InsertArray(allData []models.ScheduleTime) ([]models.ScheduleTime, error) {
 	return s.repo.InsterSchedule01Array(allData)
 }
 
-func (s schedule01Service) InsertSchedule01ChunkArray(chunkSize int, allData []models.Scheduletime) error {
+func (s schedule01Service) InsertSchedule01ChunkArray(chunkSize int, allData []models.ScheduleTime) error {
 	// var maxSize = 1000
 	var stratIndex = 0
 	var endIndex = chunkSize

@@ -54,8 +54,8 @@ func (r routeRepository) SelectByCode(routeCode int32) (*models.Route, error) {
 func (r routeRepository) SelectByLineCodeWithStops(lineCode int32) (*models.Route, error) {
 	var result models.Route
 	dbResults := r.DB.Preload("Route02s", func(db *gorm.DB) *gorm.DB {
-		return db.Order("Route02.senu")
-	}).Preload("Route02s.Stop").Where("Ln_Code = ?", lineCode).Order("route_code").First(&result)
+		return db.Order("route02.senu")
+	}).Preload("Route02s.Stop").Where("ln_Code = ?", lineCode).Order("route_code").First(&result)
 	if dbResults.Error != nil {
 		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
 			return nil, models.NewError(dbResults.Error.Error(),
@@ -71,7 +71,7 @@ func (r routeRepository) SelectByRouteCodeWithStops(routeCd int32) (*models.Rout
 	var result models.Route
 	dbResults := r.DB.Preload("Route02s", func(db *gorm.DB) *gorm.DB {
 		return db.Order("Route02.senu")
-	}).Preload("Route02s.Stop").Where("route_code = ?", routeCd).First(&result)
+	}).Preload("Route02s.Stop").Where("route.route_code = ?", routeCd).First(&result)
 	if dbResults.Error != nil {
 		if errors.Is(dbResults.Error, gorm.ErrRecordNotFound) {
 			return nil, models.NewError(dbResults.Error.Error(),

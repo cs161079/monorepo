@@ -1,5 +1,7 @@
 package models
 
+import "github.com/cs161079/monorepo/common/db"
+
 type Entity interface {
 }
 
@@ -23,33 +25,46 @@ type LineOasa struct {
 Struct for Bus Lines Entities for database
 ******************************************
 */
+// type Line struct {
+// 	Id             int64   `json:"id" gorm:"primaryKey"`
+// 	Ml_Code        int16   `json:"ml_code"`
+// 	Sdc_Cd         int16   `json:"sdc_code"`
+// 	Line_Code      int32   `json:"line_code" gorm:"index:Line_Code,unique"`
+// 	Line_Id        string  `json:"line_id"`
+// 	Line_Descr     string  `json:"line_descr"`
+// 	Line_Descr_Eng string  `json:"line_descr_eng"`
+// 	Mld_master     int8    `json:"mld_master"`
+// 	Routes         []Route `json:"routes" gorm:"foreignKey:Ln_Code;references:line_code"`
+// }
+
 type Line struct {
-	Id             int64   `json:"id" gorm:"primaryKey"`
-	Ml_Code        int16   `json:"ml_code"`
-	Sdc_Cd         int16   `json:"sdc_code"`
-	Line_Code      int32   `json:"line_code" gorm:"index:Line_Code,unique"`
-	Line_Id        string  `json:"line_id"`
-	Line_Descr     string  `json:"line_descr"`
-	Line_Descr_Eng string  `json:"line_descr_eng"`
-	Mld_master     int8    `json:"mld_master"`
-	Routes         []Route `json:"routes" gorm:"foreignKey:Ln_Code;references:line_code"`
+	ID           int    `json:"id" gorm:"primaryKey"`
+	MLCode       int    `json:"ml_code" gorm:"column:ml_code"`
+	SDCCode      int    `json:"sdc_code" gorm:"column:sdc_cd"`
+	LineCode     int    `json:"line_code" gorm:"column:line_code;uniqueIndex"`
+	LineID       string `json:"line_id" gorm:"column:line_id"`
+	LineDescr    string `json:"line_descr" gorm:"column:line_descr"`
+	LineDescrEng string `json:"line_descr_eng" gorm:"column:line_descr_eng"`
+	MldMaster    int16  `json:"mld_master" gorm:"column:mld_master"`
+
+	Routes []Route `json:"routes" gorm:"foreignKey:LnCode;references:LineCode"`
 }
 
 func (Line) TableName() string {
-	return "Line"
+	return db.LINETABLE
 }
 
 type LineDto struct {
-	Id             int64    `json:"id"`
-	Ml_Code        int16    `json:"ml_code"`
-	Sdc_Cd         int32    `json:"sdc_code"`
-	Line_Code      int32    `json:"line_code"`
-	Line_Id        string   `json:"line_id"`
-	Line_Descr     string   `json:"line_descr"`
-	Line_Descr_Eng string   `json:"line_descr_eng"`
-	Mld_master     int8     `json:"mld_master"`
-	Routes         []Route  `json:"routes"`
-	Schedule       Schedule `json:"schedule"`
+	Id             int64          `json:"id"`
+	Ml_Code        int16          `json:"ml_code"`
+	Sdc_Cd         int32          `json:"sdc_code"`
+	Line_Code      int32          `json:"line_code"`
+	Line_Id        string         `json:"line_id"`
+	Line_Descr     string         `json:"line_descr"`
+	Line_Descr_Eng string         `json:"line_descr_eng"`
+	Mld_master     int8           `json:"mld_master"`
+	Routes         []Route        `json:"routes"`
+	Schedule       ScheduleMaster `json:"schedule"`
 }
 
 type ComboRec struct {

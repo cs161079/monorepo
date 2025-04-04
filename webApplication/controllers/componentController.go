@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/service"
+	"github.com/cs161079/monorepo/common/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -59,15 +61,19 @@ func (t componentController) LineCombo(ctx *gin.Context) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, map[string]any{"error": "Line code must have a value."})
 		return
 	}
+	lineCode, err := utils.StrToInt32(code)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("Parameter code must be a valid number [value=%s]!", code), "code": "err-001"})
+	}
 
 	var routesCb []models.ComboRec
-	dbResult := t.connection.Table("Route").Select("route_code as code, route_descr as descr").Where("ln_code=?", code).Find(&routesCb)
+	dbResult := t.connection.Table(db.ROUTETABLE).Select("route_code as code, route_descr as descr").Where("ln_code=?", *lineCode).Find(&routesCb)
 	if dbResult.RowsAffected == 0 {
 		dbResult.Error = gorm.ErrRecordNotFound
 	}
 	if dbResult.Error != nil {
 		if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
-			ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("Not exists Line with code=%s!", code), "code": "err-001"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, map[string]any{"error": fmt.Sprintf("No route were found for Line with code=%d!", *lineCode), "code": "err-001"})
 			return
 		} else {
 			panic(fmt.Sprintln("Database Error ", dbResult.Error.Error()))
@@ -75,13 +81,14 @@ func (t componentController) LineCombo(ctx *gin.Context) {
 	}
 
 	var sdcCb []models.ComboRec
-	dbResult = t.connection.Table("ScheduleMaster s").Distinct("s.sdc_code as code, s.sdc_descr as descr").Joins("LEFT JOIN ScheduleTime st ON s.sdc_code=st.sdc_cd").Where("st.ln_code=?", code).Find(&sdcCb)
+	dbResult = t.connection.Table(db.SCHEDULEMASTERTABLE).Distinct("schedulemaster.sdc_code as code, schedulemaster.sdc_descr as descr").
+		Joins("LEFT JOIN "+db.SCHEDULETIMETABLE+" ON schedulemaster.sdc_code=scheduletime.sdc_cd").Where("scheduletime.ln_code=?", *lineCode).Find(&sdcCb)
 	if dbResult.RowsAffected == 0 {
 		dbResult.Error = gorm.ErrRecordNotFound
 	}
 	if dbResult.Error != nil {
 		if errors.Is(dbResult.Error, gorm.ErrRecordNotFound) {
-			ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("Not exists Line with code=%s!", code), "code": "err-001"})
+			ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": fmt.Sprintf("No scheduled routes were found for Line with code=%d!", *lineCode), "code": "err-001"})
 			return
 		} else {
 			panic(fmt.Sprintln("Database Error ", dbResult.Error.Error()))

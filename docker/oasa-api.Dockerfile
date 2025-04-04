@@ -1,4 +1,6 @@
-FROM golang:1.22-alpine
+FROM golang:1.23 AS builder
+#Install Git (To fetch Go Modules)
+RUN apt-get update && apt-get install -y git
 
 # Set Go environment variables
 # Set environment variables
@@ -17,12 +19,13 @@ COPY common/ common/
 COPY webApplication/config webApplication/config
 COPY webApplication/controllers webApplication/controllers
 
-COPY go.sum go.sum
+#COPY go.sum go.sum
 COPY go.mod go.mod
 COPY webApplication/main.go .
 COPY webApplication/.env .
 
 RUN go mod download
+RUN go mod tidy
 
 RUN go build -o bin/executable_go
 

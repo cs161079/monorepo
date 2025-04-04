@@ -14,13 +14,13 @@ import (
 type ScheduleRepository interface {
 	WithTx(tx *gorm.DB) scheduleRepository
 	DeleteAll() error
-	SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.Schedule, error)
-	InsertScheduleMaster(input models.Schedule) error
-	InsertScheduleMasterArray(input []models.Schedule) ([]models.Schedule, error)
+	SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.ScheduleMaster, error)
+	InsertScheduleMaster(input models.ScheduleMaster) error
+	InsertScheduleMasterArray(input []models.ScheduleMaster) ([]models.ScheduleMaster, error)
 	DeleteScheduleMaster() error
 
-	SelectByLineSdcCodeWithTimes(int32, int32) (*models.Schedule, error)
-	SelectCurrentSchedule(int32) (*models.Schedule, error)
+	SelectByLineSdcCodeWithTimes(int32, int32) (*models.ScheduleMaster, error)
+	SelectCurrentSchedule(int32) (*models.ScheduleMaster, error)
 }
 
 type scheduleRepository struct {
@@ -34,7 +34,7 @@ func NewScheduleRepository(connection *gorm.DB) ScheduleRepository {
 }
 
 func (r scheduleRepository) DeleteAll() error {
-	if err := r.DB.Table(db.SCHEDULEMASTERTABLE).Where("1=1").Delete(&models.Schedule{}).Error; err != nil {
+	if err := r.DB.Table(db.SCHEDULEMASTERTABLE).Where("1=1").Delete(&models.ScheduleMaster{}).Error; err != nil {
 		//trans.Rollback()
 		return err
 	}
@@ -50,8 +50,8 @@ func (r scheduleRepository) WithTx(tx *gorm.DB) scheduleRepository {
 	return r
 }
 
-func (r scheduleRepository) SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.Schedule, error) {
-	var selectedVal models.Schedule
+func (r scheduleRepository) SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*models.ScheduleMaster, error) {
+	var selectedVal models.ScheduleMaster
 	res := r.DB.Table(db.SCHEDULEMASTERTABLE).Where("sdc_code = ? AND line_code = ?", iSdc, iLine).Find(&selectedVal)
 	if res.Error != nil {
 		return nil, res.Error
@@ -59,7 +59,7 @@ func (r scheduleRepository) SelectBySdcCodeLineCode(iLine int64, iSdc int32) (*m
 	return &selectedVal, nil
 }
 
-func (r scheduleRepository) InsertScheduleMaster(input models.Schedule) error {
+func (r scheduleRepository) InsertScheduleMaster(input models.ScheduleMaster) error {
 	res := r.DB.Table(db.SCHEDULEMASTERTABLE).Save(&input)
 	if res.Error != nil {
 		return res.Error
@@ -68,14 +68,14 @@ func (r scheduleRepository) InsertScheduleMaster(input models.Schedule) error {
 }
 
 func (r scheduleRepository) DeleteScheduleMaster() error {
-	if err := r.DB.Table(db.SCHEDULEMASTERTABLE).Where("1=1").Delete(&models.Schedule{}).Error; err != nil {
+	if err := r.DB.Table(db.SCHEDULEMASTERTABLE).Where("1=1").Delete(&models.ScheduleMaster{}).Error; err != nil {
 		//trans.Rollback()
 		return err
 	}
 	return nil
 }
 
-func (r scheduleRepository) InsertScheduleMasterArray(input []models.Schedule) ([]models.Schedule, error) {
+func (r scheduleRepository) InsertScheduleMasterArray(input []models.ScheduleMaster) ([]models.ScheduleMaster, error) {
 	res := r.DB.Table(db.SCHEDULEMASTERTABLE).Save(input)
 	if res.Error != nil {
 		return nil, res.Error
@@ -83,9 +83,9 @@ func (r scheduleRepository) InsertScheduleMasterArray(input []models.Schedule) (
 	return input, nil
 }
 
-func (r scheduleRepository) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.Schedule, error) {
-	var result models.Schedule
-	dbResults := r.DB.Preload("Schedule_Details", func(db *gorm.DB) *gorm.DB {
+func (r scheduleRepository) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.ScheduleMaster, error) {
+	var result models.ScheduleMaster
+	dbResults := r.DB.Preload("ScheduleTimes", func(db *gorm.DB) *gorm.DB {
 		return db.Where("ln_code = ?", lineCode).Order("sort")
 	}).Where("sdc_code=?", sdcCode).First(&result)
 
@@ -96,9 +96,9 @@ func (r scheduleRepository) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode
 	return &result, nil
 }
 
-func (r scheduleRepository) SelectCurrentSchedule(lineCode int32) (*models.Schedule, error) {
-	var result models.Schedule
-	var hlpArr []models.Schedule
+func (r scheduleRepository) SelectCurrentSchedule(lineCode int32) (*models.ScheduleMaster, error) {
+	var result models.ScheduleMaster
+	var hlpArr []models.ScheduleMaster
 	dbResults := r.DB.Preload("Schedule_Details", func(db *gorm.DB) *gorm.DB {
 		return db.Where("ln_code = ?", lineCode).Order("sort")
 	}).Find(&hlpArr)
@@ -111,7 +111,7 @@ func (r scheduleRepository) SelectCurrentSchedule(lineCode int32) (*models.Sched
 	currentDay := time.Now().Weekday()
 
 	for _, rec := range hlpArr {
-		if len(rec.Schedule_Details) != 0 && string(rec.Sdc_days[currentDay]) == "1" && string(rec.Sdc_months[currentMonth-1]) == "1" {
+		if len(rec.ScheduleTimes) != 0 && string(rec.SDCDays[currentDay]) == "1" && string(rec.SDCMonths[currentMonth-1]) == "1" {
 			result = rec
 			return &result, nil
 		}

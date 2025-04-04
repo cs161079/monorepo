@@ -64,7 +64,7 @@ func (s lineService) GetLineList() ([]models.LineDto01, error) {
 func (s lineService) PostLine(line *models.Line) (*models.Line, error) {
 	var selectedLine *models.Line = nil
 	var err error = nil
-	selectedLine, err = s.repo.SelectByCode(line.Line_Code)
+	selectedLine, err = s.repo.SelectByCode(int32(line.LineCode))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s lineService) PostLine(line *models.Line) (*models.Line, error) {
 	if isNew {
 		return s.repo.Insert(line)
 	} else {
-		line.Id = selectedLine.Id
+		line.ID = selectedLine.ID
 		return s.repo.Update(line)
 	}
 }
@@ -143,7 +143,7 @@ func (s lineService) AlternativeLinesList(line_id string) ([]models.ComboRec, er
 	var result []models.ComboRec = make([]models.ComboRec, 0)
 	if len(altLineList) > 0 {
 		for _, rec := range altLineList {
-			result = append(result, models.ComboRec{Code: rec.Line_Code, Descr: strconv.Itoa(int(rec.Line_Code)) + "-" + rec.Line_Descr})
+			result = append(result, models.ComboRec{Code: int32(rec.LineCode), Descr: strconv.Itoa(int(rec.LineCode)) + "-" + rec.LineDescr})
 		}
 	}
 	return result, nil

@@ -46,6 +46,8 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.
 	testCtrl.AddRoutes(eng)
 	oasaCtrl.AddRouters(eng)
 
+	//db.AutoMigrate(&models.Line{}, &models.Route{}, &models.Stop{}, &models.Route01{}, &models.Route02{}, &models.ScheduleMaster{}, &models.ScheduleTime{})
+
 	return &App{
 		engine: eng,
 	}

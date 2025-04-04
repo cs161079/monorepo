@@ -10,7 +10,7 @@ spec:
   - host: api.opsw.gr
     http:
       paths:
-      - path: /lines
+      - path: /
         pathType: Prefix
         backend:
           service:

@@ -9,10 +9,10 @@ import (
 type ScheduleService interface {
 	WithTrx(*gorm.DB) scheduleService
 	DeleteAll() error
-	InsertScheduleArray([]models.Schedule) ([]models.Schedule, error)
-	InsertScheduleChunkArray(chunkSize int, allData []models.Schedule) error
-	SelectByLineSdcCodeWithTimes(int32, int32) (*models.Schedule, error)
-	SelectCurrentSchedule(int32) (*models.Schedule, error)
+	InsertScheduleArray([]models.ScheduleMaster) ([]models.ScheduleMaster, error)
+	InsertScheduleChunkArray(chunkSize int, allData []models.ScheduleMaster) error
+	SelectByLineSdcCodeWithTimes(int32, int32) (*models.ScheduleMaster, error)
+	SelectCurrentSchedule(int32) (*models.ScheduleMaster, error)
 }
 
 type scheduleService struct {
@@ -34,11 +34,11 @@ func (s scheduleService) WithTrx(txtHandle *gorm.DB) scheduleService {
 	return s
 }
 
-func (s scheduleService) InsertScheduleArray(allData []models.Schedule) ([]models.Schedule, error) {
+func (s scheduleService) InsertScheduleArray(allData []models.ScheduleMaster) ([]models.ScheduleMaster, error) {
 	return s.repo.InsertScheduleMasterArray(allData)
 }
 
-func (s scheduleService) InsertScheduleChunkArray(chunkSize int, allData []models.Schedule) error {
+func (s scheduleService) InsertScheduleChunkArray(chunkSize int, allData []models.ScheduleMaster) error {
 	var stratIndex = 0
 	var endIndex = chunkSize
 	if chunkSize > len(allData) {
@@ -65,10 +65,10 @@ func (s scheduleService) InsertScheduleChunkArray(chunkSize int, allData []model
 	return nil
 }
 
-func (s scheduleService) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.Schedule, error) {
+func (s scheduleService) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode int32) (*models.ScheduleMaster, error) {
 	return s.repo.SelectByLineSdcCodeWithTimes(lineCode, sdcCode)
 }
 
-func (s scheduleService) SelectCurrentSchedule(linCode int32) (*models.Schedule, error) {
+func (s scheduleService) SelectCurrentSchedule(linCode int32) (*models.ScheduleMaster, error) {
 	return s.repo.SelectCurrentSchedule(linCode)
 }

@@ -7,9 +7,7 @@ import (
 	"time"
 
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
-
 	"github.com/joho/godotenv"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -95,6 +93,16 @@ func createDataSource() (*datasource, error) {
 	}, nil
 }
 
+func getGormConfig() *gorm.Config {
+	gormLogger := logger.GetGormLogger()
+	if gormLogger == nil {
+		return &gorm.Config{}
+	}
+	return &gorm.Config{
+		Logger: gormLogger,
+	}
+}
+
 // This is core for DB
 
 func NewOpswConnection() (*gorm.DB, error) {
@@ -112,9 +120,7 @@ func NewOpswConnection() (*gorm.DB, error) {
 		SkipInitializeWithVersion: false,                      // auto configure based on currently MySQL version
 	})
 
-	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.GetGormLogger(),
-	})
+	db, err := gorm.Open(dialector, getGormConfig())
 
 	if err != nil {
 		// fmt.Println("An Error occured on creation of database connection")

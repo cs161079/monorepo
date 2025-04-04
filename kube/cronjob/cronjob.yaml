@@ -4,17 +4,24 @@ metadata:
   name: oasa-cronjob
   namespace: oasa-telemat
 spec:
-  schedule: "*/30 * * * *"  # Runs every day at 21pm
+  schedule: "*/10 * * * *"  # Runs every day at 21pm
   jobTemplate:
     spec:
       template:
         spec:
           containers:
           - name: oasa-job-container
-            image: localhost:5000/oasa-job:0.0.1
+            image: oulisnikos/oasa-cron:0.0.3
             envFrom:
             - configMapRef:
                 name: enviroment-config-job
+            volumeMounts:
+            - name: job-logs
+              mountPath: /var/log/oasa
+          volumes:
+          - name: job-logs
+            persistentVolumeClaim:
+                claimName: job-logs-pvc
           restartPolicy: Never
           initContainers:
           - name: wait-for-mysql-pod

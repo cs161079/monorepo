@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/cs161079/monorepo/common/db"
 )
 
 const Direction_GO = 1
@@ -12,17 +14,28 @@ const Direction_COME = 0
 
 // ********* Struct for Schedule times **************
 // *************** Database Entity ******************
-type Scheduletime struct {
-	Sdc_Cd     int32    `json:"sdc_code" gorm:"primaryKey"`
-	Ln_Code    int32    `json:"line_code" gorm:"primaryKey"`
-	Start_time OpswTime `json:"start_time" gorm:"primaryKey"`
-	End_time   OpswTime `json:"end_time"`
-	Sort       int32    `json:"sort"`
-	Direction  int8     `json:"direction" gorm:"primaryKey"`
+// type Scheduletime struct {
+// 	Sdc_Cd     int32    `json:"sdc_code" gorm:"primaryKey"`
+// 	Ln_Code    int32    `json:"line_code" gorm:"primaryKey"`
+// 	Start_time OpswTime `json:"start_time" gorm:"primaryKey"`
+// 	End_time   OpswTime `json:"end_time"`
+// 	Sort       int32    `json:"sort"`
+// 	Direction  int8     `json:"direction" gorm:"primaryKey"`
+// }
+
+type ScheduleTime struct {
+	LnCode    int      `json:"sdc_code" gorm:"column:ln_code;primaryKey"` // FK to line.line_code
+	SDCCd     int      `json:"line_code" gorm:"column:sdc_cd;primaryKey"` // FK to schedulemaster.sdc_code
+	StartTime OpswTime `json:"start_time" gorm:"column:start_time;primaryKey"`
+	EndTime   OpswTime `json:"end_time" gorm:"column:end_time"`
+	Sort      int      `json:"sort" gorm:"column:sort"`
+	Direction int      `json:"direction" gorm:"column:direction;primaryKey"`
+
+	ScheduleMaster ScheduleMaster `json:"schedule" gorm:"foreignKey:SDCCd;references:SDCCode"`
 }
 
-func (Scheduletime) TableName() string {
-	return "Scheduletime"
+func (ScheduleTime) TableName() string {
+	return db.SCHEDULETIMETABLE
 }
 
 // CustomDate type to handle custom date formats

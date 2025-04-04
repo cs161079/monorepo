@@ -1,6 +1,7 @@
 package models
 
 import (
+	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,6 +41,7 @@ func HttpResponse(ctx *gin.Context, err error) {
 		// wrappedErr := err.(*CustomError)
 		ctx.AbortWithStatusJSON(int(wrappedErr.code), map[string]string{"message": err.Error()})
 	} else {
+		logger.ERROR(err.Error())
 		ctx.AbortWithStatusJSON(500, map[string]string{"message": "Internal Server Error"})
 	}
 }

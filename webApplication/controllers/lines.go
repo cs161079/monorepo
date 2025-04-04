@@ -76,7 +76,7 @@ func (t LineControllerImplementation) GetLineInfo(ctx *gin.Context) {
 
 	line.Routes = append(line.Routes, *route)
 
-	var schedule *models.Schedule
+	var schedule *models.ScheduleMaster
 
 	schedule, err = t.schedService.SelectByLineSdcCodeWithTimes(line.Line_Code, line.Sdc_Cd)
 	if err != nil {
