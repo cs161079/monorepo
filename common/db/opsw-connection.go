@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 type Datasource interface {
@@ -96,7 +97,9 @@ func createDataSource() (*datasource, error) {
 func getGormConfig() *gorm.Config {
 	gormLogger := logger.GetGormLogger()
 	if gormLogger == nil {
-		return &gorm.Config{}
+		return &gorm.Config{
+			Logger: gormlogger.Default.LogMode(gormlogger.Silent),
+		}
 	}
 	return &gorm.Config{
 		Logger: gormLogger,
