@@ -7,7 +7,6 @@ import (
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/mapper"
-	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
 	"github.com/cs161079/monorepo/common/service"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -22,7 +21,7 @@ type App struct {
 }
 
 func NewApp(db *gorm.DB, logger logger.OpswLogger, syncSrv SyncService) *App {
-	db.AutoMigrate(&models.Line{}, &models.Route{}, &models.Stop{}, &models.Route01{}, &models.Route02{}, &models.ScheduleMaster{}, &models.ScheduleTime{})
+	// db.AutoMigrate(&models.Line{}, &models.Route{}, &models.Stop{}, &models.Route01{}, &models.Route02{}, &models.ScheduleMaster{}, &models.ScheduleTime{})
 	return &App{
 		logger:      logger,
 		syncService: syncSrv,
@@ -45,6 +44,7 @@ func (a App) Boot() {
 		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την εισαγωγή των δεδομένων στην βάση δεδομένων. %s\n", err.Error()))
 		return
 	}
+
 	end := time.Now()
 	// Calculate the duration
 	duration := end.Sub(start)
