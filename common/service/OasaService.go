@@ -2,7 +2,6 @@ package service
 
 import (
 	"sort"
-	"strings"
 
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
@@ -29,17 +28,23 @@ func NewOasaService(routeRepo repository.RouteRepository, mapper mapper.OasaMapp
 }
 
 func (c OasaServiceImpl) GetBusArrival(stop_code int32) ([]models.StopArrival, error) {
-	response := c.restSrv.OasaRequestApi00("getStopArrivals", map[string]interface{}{"p1": stop_code})
 
+	// Request to OASA Server to ger Bus Arrivals
+	response := c.restSrv.OasaRequestApi00("getStopArrivals", map[string]interface{}{"p1": stop_code})
 	if response.Error != nil {
 		return nil, response.Error
 	}
-	var result = make([]models.StopArrival, 0)
+
+	// var result = make([]models.StopArrival, 0)
 	var structedResponse = make([]models.StopArrivalOasa, 0)
 	if response.Data != nil {
 		structedResponse = c.mapper.GetOasaStopArrivals(response.Data.([]interface{}))
 	}
+
 	sort.Slice(structedResponse, func(i, j int) bool {
+		if structedResponse[i].Route_code == structedResponse[j].Route_code {
+			return structedResponse[i].Btime2 < structedResponse[j].Btime2
+		}
 		return structedResponse[i].Btime2 < structedResponse[j].Btime2
 	})
 
@@ -48,38 +53,58 @@ func (c OasaServiceImpl) GetBusArrival(stop_code int32) ([]models.StopArrival, e
 		return nil, err
 	}
 
-	// Σε αυτό το map βάζουμε βοηθητικά τις τελικές εγγραφές.
-	var helpMap map[int32]models.StopArrival = make(map[int32]models.StopArrival)
-	for _, rec := range structedResponse {
-		var recRes models.StopArrival = models.StopArrival{}
-		mapper.MapStruct(rec, &recRes)
-		val, exists := helpMap[recRes.Route_code]
-		if exists {
-			if val.NextTime == -1 {
-				val.NextTime = recRes.Btime2
-			} else {
-				val.Last_Time = recRes.Btime2
-			}
-			helpMap[recRes.Route_code] = val
-		} else {
-			for _, rec01 := range extraInfo {
-				if rec01.Route_code == rec.Route_code {
-					recRes.Line_id = rec01.Line_id
-					recRes.Line_descr = strings.Trim(rec01.Line_descr, " ")
-					recRes.NextTime = -1
-					recRes.Last_Time = -1
-					helpMap[recRes.Route_code] = recRes
+	for _, rec := range extraInfo {
+		for _, rec01 := range structedResponse {
+			if rec.Route_code == rec01.Route_code {
+				if rec.Btime2 == -1 {
+					rec.Btime2 = rec01.Btime2
+				} else if rec.NextTime == -1 {
+					rec.NextTime = rec01.Btime2
+				} else if rec.Last_Time == -1 {
+					rec.Last_Time = rec01.Btime2
 					break
 				}
 			}
 		}
 	}
 
-	for key := range helpMap {
-		result = append(result, helpMap[key])
-	}
+	// // Σε αυτό το map βάζουμε βοηθητικά τις τελικές εγγραφές.
+	// // Αρχικοποιήση του Map
+	// var helpMap map[int32]models.StopArrival = make(map[int32]models.StopArrival)
 
-	return result, nil
+	// // For στις γραμμές που έχω φέρει από την βάση για να εμφανίζουμε ουσιαστικά
+	// // ποιες γραμμές περνάνε από αυτή τη στάση
+	// for _, rec := range structedResponse {
+	// 	var recRes models.StopArrival = models.StopArrival{}
+	// 	// mapper για να γεμίσουμε το ένα record και τίποτα
+	// 	mapper.MapStruct(rec, &recRes)
+	// 	val, exists := helpMap[recRes.Route_code]
+	// 	if exists {
+	// 		if val.NextTime == -1 {
+	// 			val.NextTime = recRes.Btime2
+	// 		} else {
+	// 			val.Last_Time = recRes.Btime2
+	// 		}
+	// 		helpMap[recRes.Route_code] = val
+	// 	} else {
+	// 		for _, rec01 := range extraInfo {
+	// 			if rec01.Route_code == rec.Route_code {
+	// 				recRes.Line_id = rec01.Line_id
+	// 				recRes.Line_descr = strings.Trim(rec01.Line_descr, " ")
+	// 				recRes.NextTime = -1
+	// 				recRes.Last_Time = -1
+	// 				helpMap[recRes.Route_code] = recRes
+	// 				break
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// for key := range helpMap {
+	// 	result = append(result, helpMap[key])
+	// }
+
+	return extraInfo, nil
 }
 
 func (s OasaServiceImpl) GetBusLocation(route_code int32) ([]models.BusLocation, error) {

@@ -30,7 +30,7 @@ func ErrorHandler(c *gin.Context, err any) {
 
 func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.RouteController,
 	stopCtrl controllers.StopController, schedCtrl controllers.ScheduleController, compCtrl controllers.ComponentController,
-	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController) *App {
+	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController, notifyCtrl controllers.NotificationController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	eng.Use(cors.Default())
@@ -45,6 +45,7 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.
 	compCtrl.AddRouters(eng)
 	testCtrl.AddRoutes(eng)
 	oasaCtrl.AddRouters(eng)
+	notifyCtrl.AddRouters(eng)
 
 	//db.AutoMigrate(&models.Line{}, &models.Route{}, &models.Stop{}, &models.Route01{}, &models.Route02{}, &models.ScheduleMaster{}, &models.ScheduleTime{})
 
@@ -120,6 +121,7 @@ func BuildInRuntime() (*App, error) {
 		controllers.NewComponentController,
 		controllers.TestControllerConstructor,
 		controllers.NewOasaNativeController,
+		controllers.NewNotifcationController,
 		NewApp,
 	}
 

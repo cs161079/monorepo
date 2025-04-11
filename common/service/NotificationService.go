@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/cs161079/monorepo/common/models"
@@ -12,7 +11,7 @@ import (
 )
 
 type NotificationService interface {
-	SendPushNotification(string, models.Notification) error
+	SendPushNotification(models.Notification) error
 }
 
 type notificationServiceImpl struct {
@@ -22,21 +21,21 @@ func NewNotificationService() NotificationService {
 	return &notificationServiceImpl{}
 }
 
-func (s notificationServiceImpl) SendPushNotification(serviceAccountPath string, notEntity models.Notification) error {
+func (s notificationServiceImpl) SendPushNotification(notEntity models.Notification) error {
 	// Initialize a context and authenticate using the service account file
 	ctx := context.Background()
-	client, err := fcm.NewService(ctx, option.WithCredentialsFile(serviceAccountPath))
+	client, err := fcm.NewService(ctx, option.WithCredentialsFile("var/bus-telematics-firebase.json"))
 	if err != nil {
 		return fmt.Errorf("failed to create FCM client: %v", err)
 	}
 
-	if notEntity.Topic == "" {
-		return errors.New("Topic is empty. As can be written notification.")
-	}
+	// if notEntity.Topic == "" {
+	// 	return errors.New("Topic is empty. As can be written notification.")
+	// }
 
 	// Prepare the FCM message request
 	message := &fcm.Message{
-		Token: notEntity.Topic,
+		Topic: "bus-telematics",
 		Notification: &fcm.Notification{
 			Title: notEntity.Title,
 			Body:  notEntity.Message,

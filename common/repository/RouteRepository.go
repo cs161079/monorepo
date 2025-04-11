@@ -19,6 +19,11 @@ type RouteRepository interface {
 	Insert(models.Route) (*models.Route, error)
 	InsertArray([]models.Route) ([]models.Route, error)
 	Update(models.Route) (*models.Route, error)
+	// Returns LINE IDs and ROUTES that pass through this stop.
+	//
+	// @input stop_code int32 STOP code.
+	//
+	// @returns []models.StopArrival, error.
 	ExtraArrivalInfo(int32) ([]models.StopArrival, error)
 	List01() ([]models.Route, error)
 	WithTx(*gorm.DB) routeRepository

@@ -35,9 +35,9 @@ func (c notificationControllerImpl) pushNotification(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := c.ntSvc.SendPushNotification("bus-telematics-firebase.json", notification); err != nil {
+	if err := c.ntSvc.SendPushNotification(notification); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusBadRequest, gin.H{"resposne": "Notificatin Pushed Successfully!"})
+	ctx.JSON(http.StatusOK, gin.H{"resposne": "Notificatin Pushed Successfully!"})
 }

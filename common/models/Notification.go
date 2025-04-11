@@ -1,7 +1,7 @@
 package models
 
 type Notification struct {
-	Topic   string
-	Title   string
-	Message string
+	AlertType string `json:"alertType"`
+	Title     string `json:"title"`
+	Message   string `json:"message"`
 }

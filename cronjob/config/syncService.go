@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/service"
@@ -66,6 +67,9 @@ type SyncService interface {
 	SyncData() error
 	DeleteAll() error
 	InserttoDatabase() error
+
+	// Αυτή η μέθοδος θα ελέγχει και θα συγχρονίζει μόνο ότι πληροφορία χρειάζεται.
+	SyncData02() error
 }
 
 type syncService struct {
@@ -193,6 +197,11 @@ func (s *syncService) InserttoDatabase() error {
 		return err
 	}
 
+	// Θα καλέσουμε μία διαδικασία ελέγχου.
+	CheckSdc(s.HelpScheduletime, s.dbConnection)
+
+	//s.HelpScheduletime = demoArr
+
 	txt = s.dbConnection.Begin()
 	if err := s.schedule01Service.WithTrx(txt).InsertSchedule01ChunkArray(10000, s.HelpScheduletime); err != nil {
 		return err
@@ -202,6 +211,51 @@ func (s *syncService) InserttoDatabase() error {
 		return err
 	}
 	return nil
+}
+
+func CheckSdc(arrData []models.ScheduleTime, connection *gorm.DB) []models.ScheduleTime {
+
+	// Kάνουμε Select όλα τα sdc_code από το πίνακα ScheduleMaster
+	var distinctFromDb []int32
+	dbResult := connection.Table(db.SCHEDULEMASTERTABLE).Select("sdc_code").Find(&distinctFromDb)
+	if dbResult.Error != nil {
+		logger.ERROR("Database error " + dbResult.Error.Error())
+	}
+
+	// Γεμίζουμε ένα Map για να μπορούμε να βρίσκουμε εύκολα με το κλειδί που θέλουμε.
+	// Στην προκυμένη με το sdc_code.
+	var sdcMap map[int32]int32 = make(map[int32]int32)
+	for _, rec := range distinctFromDb {
+		sdcMap[rec] = rec
+	}
+
+	// Κάνουμε μία ταξινόμηση με το sdc_code το πίνακα με τις ώρες
+	sort.Slice(arrData, func(i, j int) bool {
+		return arrData[i].SDCCd < arrData[j].SDCCd
+	})
+
+	var medData []models.ScheduleTime = make([]models.ScheduleTime, 0)
+
+	for i, rec := range arrData {
+		if rec.SDCCd != -1 {
+			medData = append(medData, arrData[i])
+		}
+	}
+
+	//Αρχικοποιώ τον τελικό πίνακα
+	var lastData []models.ScheduleTime = make([]models.ScheduleTime, 0)
+
+	for i, rec := range medData {
+		if _, exists := sdcMap[int32(rec.SDCCd)]; exists {
+			lastData = append(lastData, arrData[i])
+		}
+	}
+	return lastData
+
+}
+
+func removeByIndex(slice []int, index int) []int {
+	return append(slice[:index], slice[index+1:]...)
 }
 
 func (s *syncService) DeleteAll() error {
@@ -823,5 +877,25 @@ func (s *syncService) syncScheduleTime() error {
 			}
 		}
 	}
+	return nil
+}
+
+func (s *syncService) SyncData02() error {
+	// Πρέπει να φέρουμε πληροφορία από τον OASA Server το max id για κάθέ οντότητα π.χ Line, Route, Route01, Route02,
+	// Schedule, Scheduletime
+
+	restResponse := s.restService.OasaRequestApi00("getUversions", nil)
+	if restResponse.Error != nil {
+		return restResponse.Error
+	}
+	// Κάνω Cast σε Array από Maps
+	restData := restResponse.Data.([]any)
+	mapper := mapper.NewUVersionMapper()
+	var arrUvers []models.UVersionsOasa = make([]models.UVersionsOasa, 0)
+	for _, rec := range restData {
+		arrUvers = append(arrUvers, mapper.GeneralUVersions(rec))
+	}
+	fmt.Printf("These are data %v", arrUvers)
+
 	return nil
 }
