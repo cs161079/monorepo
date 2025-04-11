@@ -75,18 +75,18 @@ func InitLogger(applicationName string) {
 	Logger = CreateLogger().logger
 }
 
-func (*OpswLogger) INFO(str string) {
-	Logger.Println(str)
+func (l *OpswLogger) INFO(str string) {
+	l.logger.Println(fmt.Sprintf("%s\n", str))
 }
 
-func (*OpswLogger) WARN(str string) {
-	Logger.SetLevel(logger.DebugLevel)
-	Logger.Warn(fmt.Sprintf("%s\n", str))
+func (l *OpswLogger) WARN(str string) {
+	l.logger.SetLevel(logger.DebugLevel)
+	l.logger.Warn(fmt.Sprintf("%s\n", str))
 }
 
-func (*OpswLogger) ERROR(str string) {
-	Logger.SetLevel(logger.ErrorLevel)
-	Logger.Error(fmt.Sprintf("%s\n", str))
+func (l *OpswLogger) ERROR(str string) {
+	l.logger.SetLevel(logger.ErrorLevel)
+	l.logger.Error(fmt.Sprintf("%s\n", str))
 }
 
 func INFO(str string) {
