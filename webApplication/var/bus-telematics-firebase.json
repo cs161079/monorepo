@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "bus-telematics",
+  "private_key_id": "6b3ddbac0a3b8e30be3783a4bd841ea12cbaaaec",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCrTt8T4PYrC/e1\nmTcdMAjYADJ2rMVJ9VUz5iL25BKcVisHzHUdeu47axEAEs6mQsqEso5YO/Is5fYe\nspmS6e+tTy1Y+i6PImRnGPuPzfSyE5zVfmgHPBGaqeuunB+5/AZqRoGSQyymn2+A\nJV9xEfqapcD+Pk0cWNxbszSjWaxvqIOcPnbnJVIxaD6qqBfDCTBEFkm16mnoRd8r\nt1lwjmAle5OoW1e3qR48r+spjXFIqkb1BQWSqNVcnHHg2p0wOd7cCtleg7i2HQMx\n96wf6fvpMDVcosJhOq7vok1Zy+F5Gn1Qygvv8gPqHIbLylHxt3BYf1MVqtQfozdb\nhvQ8KOAXAgMBAAECggEACDvcQQpZCqyilVnt6js60ZcA1e9r9CgUllADcjZ4JoeF\nvfQ31NjpxnVY9dXxlNA1B7fFW7xV4Y6UC9mtw//2gzABD/vGbR7MEKCExt6xWjXT\nHffbbC2Y8wQjzdq3M6tHa6hD5hHQfZnANDqXocmpb/Fzm0THVAt5W/b7GrbesOcm\nZfjdMfMIdcgsdBcxoKb37yYueF/BsSDRR++L789blBhec5AN5mfdNxIRwEYO5lWv\nYsmzgJkdGCZys/ghaJsa+a2TmKOyog+z76JFIwAQjlCZElneuLv9YC8gnceA+1ZK\n0bWwiEd1opNkS4Ls7QaFnZ2KAtE4rczRaX3r7UzRoQKBgQDlDZZ+95FruyTQRAvj\nOqRJu7oowMh/9+2LKs7jOVNgwxiuDlFarHkItZ4s8eRvcywDj41V/Fc+1gEvh44q\nvMICZ/Jt40jVc8V4FDuViaDte1aQBmFZw10QwmPvs4mmaomA9Djs5vhR76EtaK4A\nFiHCoIS134Zllw+gTWq3WH6JqQKBgQC/diwuUg7o1XXMpwEqTigQIhzuhmytPVjx\n7k+vUcghuYMJCnmyZo3mekltaEZpqjXLFBv9a1uwwShv03Xx/B9PoWYsPGJxqdo5\nvNglHMVF0wTEyuHpIu2Jrr8x2kL7ReOLEj6xpf1HL9+6WZWJ8BwL+wOViwzniuSZ\nTjSA5OezvwKBgBIThHD4sK1D05/r/tQr6JM5EXPt4uTWeBSniDQ+beoQ+32g+6Kg\nQd0CGD2LyW9SM4MEbS7//xKiaO2LURjmVJlEAsnRSgouXMMhNaKTffO/7BDpr/0Z\ngdq0vJZKIO7VMYzPuT5Y6/frZVjkDfdLx9ZIPLDttvmFdmI8OdPGVBYhAoGABKmg\nEdC1xD3OjJlUke8tUpdCFRz48I8Z52piTmazdP7LjiDPLeUJd59qwltTu6cFgFiR\nBe7jYL6TeYWwzZ/SM2I+1rzxuMrmIZnTubOlqjmlWBWIwuCy4DN9PH2QPAZLsEtV\nc4YTUPR9glBEMAPE6xXF1JJ6Ufkz7/fTl3/7lIkCgYB/a4yqa/6D7plFeA/uj4zD\nea5hGaRRc6potspHAEi8vmH2Z/woINgLofzH+Mm+LFu87IzYGJYiy8B5+mRbWW2G\n9dU9VXBdqizbsZ5TIF+Bk943PpH2GcqWLyIuh+v5vnl1dG0isxg3FFhwWGVHYIss\nywO+NgZNxBpAm1bbb2QQ0A==\n-----END PRIVATE KEY-----\n",
+  "client_email": "bus-telematic-admin@bus-telematics.iam.gserviceaccount.com",
+  "client_id": "107793829646255175741",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/bus-telematic-admin%40bus-telematics.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
