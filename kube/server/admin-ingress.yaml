@@ -1,24 +1,22 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: api-ingress
+  name: admin-ingress
   namespace: oasa-telemat
-  # annotations:
-    # nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   rules:
-  - host: api.opsw.gr
+  - host: admin.opsw.gr
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: oasa-server-svc
+            name: admin-service
             port:
               number: 80
   tls: 
     - 
       hosts: 
-        - api.opsw.gr
+        - admin.opsw.gr
       secretName: tls-secret-v2

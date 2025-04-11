@@ -10,7 +10,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: admin.opsw.gr  # Change this to your actual domain
+  - host: dashboard.opsw.gr  # Change this to your actual domain
     http:
       paths:
       - path: /
