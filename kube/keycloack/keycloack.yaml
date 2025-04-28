@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: oasa-telemat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      volumes:
+      - name: host-volume
+        hostPath:
+          path: /tmp/keycloak-depl
+          type: DirectoryOrCreate
+      # - name: tmp-volume
+      #   emptyDir: {}
+      containers:
+      - name: keycloak
+        volumeMounts:
+        - mountPath: /opt/jboss/keycloak/standalone/tmp
+          name: host-volume
+        image: quay.io/keycloak/keycloak:17.0.1-legacy
+        env:
+        - name: KEYCLOAK_FRONTEND_URL
+          value: "https://oauth.opsw.gr/auth"
+        - name: DB_VENDOR
+          value: mysql
+        - name: DB_DATABASE
+          value: keycloak
+        - name: DB_USER
+          value: keycloak
+        - name: DB_PASSWORD
+          value: keycloakpassword
+        - name: KEYCLOAK_ADMIN
+          value: admin
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: adminpassword
+        - name: DB_ADDR
+          value: mysql-svc
+        - name: KC_LOG
+          value: console,file
+        - name: KC_LOG_FILE
+
+
+        ports:
+        - containerPort: 8080
+        # resources:
+        #   requests:
+        #     cpu: "500m"
+        #     memory: "1Gi"
+        #     ephemeral-storage: "512Mi"
+        #   limits:
+        #     cpu: "1"
+        #     memory: "2Gi"
+        #     ephemeral-storage: "1Gi"
+        readinessProbe:
+          httpGet:
+            path: /auth/realms/master
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      initContainers:
+        - name: wait-for-mysql-pod
+          image: busybox:1.28
+          args:
+            - /bin/sh
+            - -c
+            - until telnet mysql-svc 3306; do echo waiting for mysql-service; sleep 2; done;

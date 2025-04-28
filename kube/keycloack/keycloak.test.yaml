@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak-test
+  namespace: oasa-telemat
+  labels:
+    app: keycloak-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak-test
+  template:
+    metadata:
+      labels:
+        app: keycloak-test
+    spec:
+      containers:
+        - name: keycloak-cntr
+          image: quay.io/keycloak/keycloak:17.0.1-legacy
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KEYCLOAK_FRONTEND_URL
+              value: "https://oauth.opsw.gr/auth"
+            - name: KEYCLOAK_USER
+              value: admin
+            - name: KEYCLOAK_PASSWORD
+              value: adminpassword
+            - name: DB_VENDOR
+              value: h2
