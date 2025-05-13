@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: keycloak-pvc
+  namespace: oasa-telemat 
+  labels:
+    pvc: keycloak
+spec:
+  storageClassName: microk8s-hostpath
+  resources:
+    requests:
+      storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: keycloak
+  name: keycloak
+  namespace: oasa-telemat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:24.0
+        envFrom:
+          - secretRef:
+              name: keycloak-config-secrets
+        command:
+          - "/opt/keycloak/bin/kc.sh"
+          - "start"
+          - "--http-enabled=true"
+          - "--hostname-strict-https=false"
+          - "--hostname-strict=false"
+          - "--proxy=edge"
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+          - mountPath: /opt/keycloak/data
+            name: keycloak-pvc
+        livenessProbe:
+          exec:
+            command:
+              - curl
+              - --head
+              - -fsS
+              - http://127.0.0.1:8080/health/ready
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+      volumes:
+        - name: keycloak-pvc
+          persistentVolumeClaim:
+            claimName: keycloak-pvc

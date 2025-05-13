@@ -7,6 +7,9 @@ import (
 	"time"
 
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -45,6 +48,7 @@ const (
 	SCHEDULELINE        = "scheduleline"
 	ROUTEDETAILTABLE    = "route01"
 	SYNCVERSIONSTABLE   = "syncversions"
+	OPSWCRONRUNS        = "opswCronRuns"
 	// ****************************************************
 )
 
@@ -139,4 +143,35 @@ func NewOpswConnection() (*gorm.DB, error) {
 	sqlDb.SetMaxOpenConns(5)
 
 	return db, nil
+}
+
+func DatabaseMigrations() error {
+	datasource, err := createDataSource()
+	if err != nil {
+		return err
+	}
+
+	m, err := migrate.New(
+		"file://db/migrations",
+		"mysql://"+datasource.DatasourceUrl(),
+	)
+	if err != nil {
+		// log.Fatalf("failed to initialize migrate: %v", err)
+		return err
+	}
+
+	if err := m.Force(1); err != nil {
+		return fmt.Errorf("Migration Up failed: %v", err)
+	}
+
+	if err := m.Up(); err != nil {
+		return fmt.Errorf("Migration Up failed: %v", err)
+	}
+
+	if err := m.Down(); err != nil {
+		return fmt.Errorf("Migration Down failed. %v", err)
+	}
+
+	logger.INFO("Migrations ran successfully!")
+	return nil
 }

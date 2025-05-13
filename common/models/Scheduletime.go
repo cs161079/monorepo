@@ -24,8 +24,8 @@ const Direction_COME = 0
 // }
 
 type ScheduleTime struct {
-	LnCode    int      `json:"sdc_code" gorm:"column:ln_code;primaryKey"` // FK to line.line_code
-	SDCCd     int      `json:"line_code" gorm:"column:sdc_cd;primaryKey"` // FK to schedulemaster.sdc_code
+	LnCode    int      `json:"line_code" gorm:"column:ln_code;primaryKey"` // FK to line.line_code
+	SDCCd     int      `json:"sdc_code" gorm:"column:sdc_cd;primaryKey"`   // FK to schedulemaster.sdc_code
 	StartTime OpswTime `json:"start_time" gorm:"column:start_time;primaryKey"`
 	EndTime   OpswTime `json:"end_time" gorm:"column:end_time"`
 	Sort      int      `json:"sort" gorm:"column:sort"`
@@ -53,7 +53,7 @@ func (d *OpswTime) UnmarshalJSON(b []byte) error {
 	if dateStr == "null" {
 		d = nil
 	} else {
-		parsedTime, err := time.Parse(`"2006-01-02 15:04:05"`, dateStr)
+		parsedTime, err := time.Parse(`"15:04:05"`, dateStr)
 		if err != nil {
 			return err
 		}
@@ -108,4 +108,11 @@ func (ct *OpswTime) Scan(value interface{}) error {
 func (ct OpswTime) Value() (driver.Value, error) {
 	t := time.Time(ct) // Convert CustomTime to time.Time
 	return t.Format(CustomTimeFormat), nil
+}
+
+type ScheduleTimeM struct {
+	StartTime OpswTime `json:"start_time"`
+	EndTime   OpswTime `json:"end_time"`
+	Sort      int      `json:"sort"`
+	Direction int      `json:"direction"`
 }

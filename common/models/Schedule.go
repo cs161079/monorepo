@@ -1,6 +1,8 @@
 package models
 
-import "github.com/cs161079/monorepo/common/db"
+import (
+	"github.com/cs161079/monorepo/common/db"
+)
 
 /*
 ***************************************************
@@ -35,4 +37,13 @@ type ScheduleDto struct {
 	Sdc_Descr     string `json:"sdc_descr"`
 	Sdc_Descr_Eng string `json:"sdc_descr_eng"`
 	Sdc_Code      int32  `json:"sdc_code"`
+}
+
+type ScheduleMasterM struct {
+	SDCDescr    string          `json:"sdc_descr"`
+	SDCDescrEng string          `json:"sdc_descr_eng"`
+	SDCCode     int32           `json:"sdc_code"`
+	SDCMonths   string          `json:"sdc_months"`
+	SDCDays     string          `json:"sdc_days"`
+	Times       []ScheduleTimeM `json:"times"`
 }

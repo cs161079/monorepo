@@ -50,3 +50,21 @@ type RouteOasa struct {
 	Route_Distance  float32 `json:"routeDistance" oasa:"RouteDistance"`
 	Stop            []Stop  `gorm:"many2many:route02;foreignKey:Route_Code;joinForeignKey:Route_Code;references:Stop_code"`
 }
+
+type RouteM struct {
+	RouteCode int32 `json:"route_code" `
+	// LnCode        int32   `json:"line_code"` // FK to Line.LineCode
+	RouteDescr    string     `json:"route_descr"`
+	RouteDescrEng string     `json:"route_descr_eng"`
+	RouteType     int8       `json:"route_type"`
+	RouteDistance float32    `json:"route_distance"`
+	Stops         []StopM    `json:"stops"`
+	Details       []Route01M `json:"details"`
+}
+
+type RouteDtoM struct {
+	RouteCode  int32      `json:"routecode" `
+	RouteDescr string     `json:"routedescr"`
+	Stops      []StopDtoM `json:"stops"`
+	Details    []Route01M `json:"details"`
+}

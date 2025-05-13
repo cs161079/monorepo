@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/cs161079/monorepo/common/db"
@@ -10,7 +11,7 @@ import (
 	"github.com/cs161079/monorepo/common/service"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 	"github.com/cs161079/monorepo/webApplication/controllers"
-	"github.com/gin-contrib/cors"
+	"github.com/cs161079/monorepo/webApplication/keycloak"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.uber.org/dig"
@@ -28,12 +29,30 @@ func ErrorHandler(c *gin.Context, err any) {
 	c.AbortWithStatusJSON(500, httpResponse)
 }
 
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		// Handle preflight
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusOK)
+			return
+		}
+
+		c.Next()
+	}
+}
+
 func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.RouteController,
 	stopCtrl controllers.StopController, schedCtrl controllers.ScheduleController, compCtrl controllers.ComponentController,
-	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController, notifyCtrl controllers.NotificationController) *App {
+	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController, notifyCtrl controllers.AdminController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
-	eng.Use(cors.Default())
+	// eng.Use(cors.Default())
+	eng.Use(CORSMiddleware())
 	gin.DefaultWriter = logger.Logger.Out
 	gin.DefaultErrorWriter = logger.Logger.Out
 	eng.Use(gin.Logger(), gin.CustomRecovery(ErrorHandler))
@@ -89,6 +108,12 @@ func InitializeApplication() {
 
 :: OASA WEB APPLICATION (v%s) :: `+"\n\n", os.Getenv("application.version"))))
 
+	// Database Migration Proccess
+	err = db.DatabaseMigrations()
+	if err != nil {
+		logger.ERROR(err.Error())
+	}
+
 }
 
 func BuildInRuntime() (*App, error) {
@@ -114,6 +139,7 @@ func BuildInRuntime() (*App, error) {
 		service.NewNotificationService,
 		service.NewRestService,
 		service.NewOasaService,
+		keycloak.NewKeycloakService,
 		controllers.NewLineController,
 		controllers.NewRouteController,
 		controllers.NewStopController,
@@ -121,7 +147,7 @@ func BuildInRuntime() (*App, error) {
 		controllers.NewComponentController,
 		controllers.TestControllerConstructor,
 		controllers.NewOasaNativeController,
-		controllers.NewNotifcationController,
+		controllers.NewAdminController,
 		NewApp,
 	}
 

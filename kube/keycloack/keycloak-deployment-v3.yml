@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: keycloak
+  name: keycloak
+  namespace: oasa-telemat
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - args:
+            - start-dev
+          env:
+            - name: KEYCLOAK_ADMIN
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: adminpassword
+            - name: KC_DB_URL_HOST
+              value: mysql-svc
+            - name: KC_DB
+              value: mysql
+            - name: KC_DB_URL_PORT
+              value: "3306"
+            - name: KC_DB_URL_DATABASE
+              value: keycloak
+            - name: KC_DB_USERNAME
+              value: mysql-user
+            - name: KC_DB_PASSWORD
+              value: "YourPassword$@"
+            - name: KC_PROXY
+              value: edge
+            - name: KC_HOSTNAME
+              value: oauth.opsw.gr
+            - name: KC_HOSTNAME_STRICT
+              value: "true"
+            - name: KC_HOSTNAME_STRICT_HTTPS
+              value: "true"
+          image: 'quay.io/keycloak/keycloak:latest'
+          imagePullPolicy: Always
+          name: keycloak
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080

@@ -80,3 +80,22 @@ type LineDto01 struct {
 	Line_Descr     string `json:"line_descr"`
 	Line_Descr_Eng string `json:"line_descr_eng"`
 }
+
+type LineM struct {
+	MLCode       int               `json:"ml_code"`
+	SDCCode      int               `json:"sdc_code"`
+	LineCode     int               `json:"line_code"`
+	LineID       string            `json:"line_id"`
+	LineDescr    string            `json:"line_descr"`
+	LineDescrEng string            `json:"line_descr_eng"`
+	MldMaster    int16             `json:"mld_master"`
+	Routes       []RouteM          `json:"routes"`
+	Schedules    []ScheduleMasterM `json:"schedules"`
+}
+
+type LineDto01M struct {
+	LineCode  int         `json:"linecode"`
+	LineID    string      `json:"lineid"`
+	LineDescr string      `json:"linedescr"`
+	Routes    []RouteDtoM `json:"routes"`
+}

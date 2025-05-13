@@ -16,14 +16,14 @@ spec:
         app: oasa-server
     spec:
       containers:
-      - image: oulisnikos/webapptest:0.0.4
-        resources:
-          requests:
-            cpu: "250m"
-            memory: "512Mi"
-          limits:
-            cpu: "500m"
-            memory: "1Gi"
+      - image: oulisnikos/oasa-serv:0.0.1-prod
+        # resources:
+        #   requests:
+        #     cpu: "250m"
+        #     memory: "512Mi"
+        #   limits:
+        #     cpu: "500m"
+        #     memory: "1Gi"
         name: oasa-server
         ports:
         - containerPort: 8082

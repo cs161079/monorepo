@@ -34,3 +34,9 @@ type Route01Oasa struct {
 	Routed_y     float32 `oasa:"routed_y"`
 	Routed_order int16   `oasa:"routed_order"`
 }
+
+type Route01M struct {
+	RoutedX     float64 `json:"routedx"`
+	RoutedY     float64 `json:"routedy"`
+	RoutedOrder int16   `json:"routedorder"`
+}

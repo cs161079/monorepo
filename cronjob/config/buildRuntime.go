@@ -30,21 +30,37 @@ func NewApp(db *gorm.DB, logger logger.OpswLogger, syncSrv SyncService) *App {
 
 func (a App) Boot() {
 	start := time.Now()
+	if err := a.syncService.InitializeCron(); err != nil {
+		a.logger.ERROR(fmt.Sprintf("Σφάλμα κατά την δημιουργία του CronJob στην Βάση. %v", err))
+	}
+
 	if err := a.syncService.SyncData(); err != nil {
 		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την λήψη των δεδομένων. %s\n", err.Error()))
+		if err01 := a.syncService.saveError(err); err01 != nil {
+			a.logger.ERROR(fmt.Sprintf("Σφάλμα κατά την αποθήκευση του σφάλματος στον Πίνακα των CronJob. %s\n", err.Error()))
+		}
 		// fmt.Printf("Κάτι πήγε στραβά με την λήψη των δεδομένων.")
 		return
 	}
 	if err := a.syncService.DeleteAll(); err != nil {
 
 		a.logger.INFO(fmt.Sprintf("Κάτι πήγε στραβά με την διαγραφή των δεδομένων από την βάση δεδομένων. %s\n", err.Error()))
+		if err01 := a.syncService.saveError(err); err01 != nil {
+			a.logger.ERROR(fmt.Sprintf("Σφάλμα κατά την αποθήκευση του σφάλματος στον Πίνακα των CronJob. %s\n", err.Error()))
+		}
 		return
 	}
 	if err := a.syncService.InserttoDatabase(); err != nil {
 		a.logger.ERROR(fmt.Sprintf("Κάτι πήγε στραβά με την εισαγωγή των δεδομένων στην βάση δεδομένων. %s\n", err.Error()))
+		if err01 := a.syncService.saveError(err); err01 != nil {
+			a.logger.ERROR(fmt.Sprintf("Σφάλμα κατά την αποθήκευση του σφάλματος στον Πίνακα των CronJob. %s\n", err.Error()))
+		}
 		return
 	}
 
+	if err := a.syncService.Finalize(); err != nil {
+		a.logger.ERROR(fmt.Sprintf("Σφάλμα κατά την αποθήκευση του σφάλματος στον Πίνακα των CronJob. %s\n", err.Error()))
+	}
 	end := time.Now()
 	// Calculate the duration
 	duration := end.Sub(start)

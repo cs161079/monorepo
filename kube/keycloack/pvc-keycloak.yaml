@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: oasa-telemat-keycloak-pvc
+  namespace: oasa-telemat 
+  labels:
+    pvc: oasa-telemat-keycloak
+spec:
+  storageClassName: microk8s-hostpath
+  resources:
+    requests:
+      storage: 100Mi
+  accessModes:
+    - ReadWriteOnce

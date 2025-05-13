@@ -13,52 +13,60 @@ spec:
       labels:
         app: keycloak
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       volumes:
-      - name: host-volume
-        hostPath:
-          path: /tmp/keycloak-depl
-          type: DirectoryOrCreate
-      # - name: tmp-volume
-      #   emptyDir: {}
+      - name: tmp-dir
+        emptyDir: {}
+      - name: keycloak-and-myswl-volume
       containers:
       - name: keycloak
         volumeMounts:
-        - mountPath: /opt/jboss/keycloak/standalone/tmp
-          name: host-volume
-        image: quay.io/keycloak/keycloak:17.0.1-legacy
-        env:
-        - name: KEYCLOAK_FRONTEND_URL
-          value: "https://oauth.opsw.gr/auth"
-        - name: DB_VENDOR
-          value: mysql
-        - name: DB_DATABASE
-          value: keycloak
-        - name: DB_USER
-          value: keycloak
-        - name: DB_PASSWORD
-          value: keycloakpassword
-        - name: KEYCLOAK_ADMIN
-          value: admin
-        - name: KEYCLOAK_ADMIN_PASSWORD
-          value: adminpassword
-        - name: DB_ADDR
-          value: mysql-svc
-        - name: KC_LOG
-          value: console,file
-        - name: KC_LOG_FILE
-
-
+        - mountPath: /tmp
+          name: tmp-dir
+        - mountPath: /var/lib/mysql
+          name: keycloak-and-myswl-volume
+        image: quay.io/keycloak/keycloak:24.0
+        command:
+          - "/opt/keycloak/bin/kc.sh"
+          - "start-dev"
+        envFrom:
+          - secretRef:
+              name: keycloak-config-secrets
+          # - name: KEYCLOAK_ADMIN
+          #   value: "admin"
+          # - name: KEYCLOAK_ADMIN_PASSWORD
+          #   value: "adminpassword"
+          # # - name: KC_HEALTH_ENABLED
+          # #   value: "true"
+          # # - name: KC_METRICS_ENABLED
+          # #   value: "true"
+          # - name: KC_HTTP_ENABLED
+          #   value: "true"
+          # - name: KC_HTTP_RELATIVE_PATH
+          #   value: "/auth"
+          # - name: KC_HOSTNAME_URL
+          #   value: "https://oauth.opsw.gr/keycloak/auth/"
+          # - name: KC_HOSTNAME_ADMIN_URL
+          #   value: "https://oauth.opsw.gr/keycloak/auth/"
+          # - name: KC_DB
+          #   value: "mysql"
+          #  - name: KC_DB_URL
+          #    value: "jdbc:mysql-svc://mysql/keycloak"
+          # - name: KC_DB_URL_HOST
+          #   value: "mysql-svc"
+          # - name: KC_DB_URL_PORT
+          #   value: "3306"
+          # - name: KC_DB_URL_DATABASE
+          #   value: "keycloak"
+          # - name: KC_DB_USERNAME
+          #   value: "mysql-user"
+          # - name: KC_DB_PASSWORD
+          #   value: "YourPassword$@"
         ports:
         - containerPort: 8080
-        # resources:
-        #   requests:
-        #     cpu: "500m"
-        #     memory: "1Gi"
-        #     ephemeral-storage: "512Mi"
-        #   limits:
-        #     cpu: "1"
-        #     memory: "2Gi"
-        #     ephemeral-storage: "1Gi"
         readinessProbe:
           httpGet:
             path: /auth/realms/master

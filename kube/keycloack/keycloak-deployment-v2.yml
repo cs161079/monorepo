@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+      - name: keycloak
+        image: quay.io/keycloak/keycloak:21.1.1
+        args: ["start", "--cache-stack=kubernetes", "--spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true"]
+        env:
+        - name: KEYCLOAK_ADMIN
+          value: "admin"
+        - name: KEYCLOAK_ADMIN_PASSWORD
+          value: "admin"
+        - name: KC_PROXY
+          value: "edge"
+        - name: jgroups.dns.query
+          value: "keycloak"
+        - name: PROXY_ADDRESS_FORWARDING
+          value: "true"
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+        - name: KC_METRICS_ENABLED
+          value: "true"
+        - name: KC_HTTP_ENABLED
+          value: "true"
+        - name: KC_HTTP_RELATIVE_PATH
+          value: "/auth"
+        - name: KC_HOSTNAME_URL
+          value: "https://oauth.opsw.gr/keycloak/auth/"
+        - name: KC_HOSTNAME_ADMIN_URL
+          value: "https://oauth.opsw.gr/keycloak/auth/"
+        - name: KC_DB
+          value: "mysql-svc"
+        - name: KC_DB_URL
+          value: "jdbc:mysql://mysql-svc/keycloak"
+        - name: KC_DB_URL_HOST
+          value: "mysql-svc"
+        - name: KC_DB_URL_PORT
+          value: "3306"
+        - name: KC_DB_URL_DATABASE
+          value: "keycloak"
+        - name: KC_DB_USERNAME
+          value: "mysql-user"
+        - name: KC_DB_PASSWORD
+          value: "YourPassword$@"
+
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443
+        - name: jgroups
+          containerPort: 7600

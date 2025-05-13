@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: kube-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: oauth2-proxy
+  template:
+    metadata:
+      labels:
+        k8s-app: oauth2-proxy
+    spec:
+      #hostAliases:
+      #- ip: "192.168.122.54"
+      #  hostnames:
+      #  - "kubemaster"
+      containers:
+      - args:
+        - --provider=oidc
+        - --email-domain=*
+        - --http-address=0.0.0.0:4180
+        #- --https-address=":443"
+        #- --upstream=file:///dev/null
+        #- --scope="groups"
+        env:
+        - name: OAUTH2_PROXY_OIDC_ISSUER_URL
+          value: https://kubemaster:8443/auth/realms/local
+        - name: OAUTH2_PROXY_REDIRECT_URL
+          value: https://kubenode:32012/oauth2/callback
+        #  value: https://192.168.122.198:8081/oauth2/callback
+        - name: OAUTH2_PROXY_CLIENT_ID
+          value: gatekeeper
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          value: jZzvJ0wCDDwltV3tAf0SXSbVoKXM1RqV
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          value: kgKUT3IMmESA81VWXvRpYIYwMSo1xndwIogUks6IS00=
+        - name: OAUTH2_PROXY_UPSTREAM
+          value: https://kubernetes-dashboard
+        - name: OAUTH2_PROXY_SSL_INSECURE_SKIP_VERIFY
+          value: "true"
+        #- name: OAUTH2_PROXY_COOKIE_DOMAIN
+        #  value: 
+        - name: OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL
+          value: "true"
+        #- name: OAUTH2_PROXY_COOKIE_SECURE
+        #  value: "false"
+        - name: OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER
+          value: "true"
+        - name: OAUTH2_PROXY_SSL_UPSTREAM_INSECURE_SKIP_VERIFY
+          value: "true"
+        - name: OAUTH2_PROXY_OIDC_EMAIL_CLAIM
+          value: email
+        - name: OAUTH2_PROXY_GROUPS_CLAIM
+          value: groups
+        - name: OAUTH2_PROXY_ALLOWED_GROUPS
+          value: developers
+        - name: OAUTH2_PROXY_SKIP_PROVIDER_BUTTON
+          value: "true"
+        - name: OAUTH2_PROXY_SET_AUTHORIZATION_HEADER
+          value: "true"
+        image: quay.io/oauth2-proxy/oauth2-proxy:latest
+        imagePullPolicy: Always
+        name: oauth2-proxy
+        ports:
+        - containerPort: 4180
+          protocol: TCP
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    k8s-app: oauth2-proxy
+  name: oauth2-proxy
+  namespace: kube-system
+spec:
+  ports:
+  - name: http
+    port: 4180
+    protocol: TCP
+    targetPort: 4180
+  selector:
+    k8s-app: oauth2-proxy

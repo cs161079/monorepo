@@ -7,8 +7,14 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/auth-url: "https://oauth2.opsw.gr/oauth2/auth"
+    nginx.ingress.kubernetes.io/auth-signin: "https://oauth2.opsw.gr/oauth2/start?rd=https://$host$request_uri"
 spec:
   ingressClassName: nginx
+  tls: 
+    - hosts: 
+        - oauth.opsw.gr
+      secretName: tls-secret-v2
   rules:
   - host: dashboard.opsw.gr  # Change this to your actual domain
     http:

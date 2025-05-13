@@ -1,0 +1,11 @@
+# oauth2-proxy deployment (values.yaml for Helm)
+config:
+  clientID: kubernetes
+  clientSecret: zLGpVGlOaV7fFE0bcGyOSCOEfoevh4L8
+  cookieSecret: e7RheSZNwbNUm7tIFag6MM1emlAsy3fIoFV/Ef8LNQk=
+  provider: oidc
+  oidcIssuerURL: https://oauth.opsw.gr/auth/realms/kubernetes
+  redirectURL: https://dashboard.opsw.gr/oauth2/callback
+  emailDomains: ["*"]
+  upstreams:
+    - http://kubernetes-dashboard.kube-system.svc.cluster.local:9090

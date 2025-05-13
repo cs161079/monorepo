@@ -72,3 +72,27 @@ type StopDtoBasicInfo struct {
 	Stop_code  int32  `json:"stop_code"`
 	Stop_descr string `json:"stop_descr"`
 }
+
+type StopM struct {
+	StopCode        int32   `json:"stop_code"`
+	StopID          string  `json:"stop_id"`
+	StopDescr       string  `json:"stop_descr"`
+	StopDescrEng    string  `json:"stop_descr_eng"`
+	StopStreet      string  `json:"stop_street"`
+	StopStreetEng   string  `json:"stop_street_eng"`
+	StopHeading     int32   `json:"stop_heading"`
+	StopLat         float64 `json:"stop_lat"`
+	StopLng         float64 `json:"stop_lng"`
+	StopType        int8    `json:"stop_type"`
+	StopAmea        int8    `json:"stop_amea"`
+	Destinations    string  `json:"destinations"`
+	DestinationsEng string  `json:"destinations_eng"`
+	StopSenu        int16   `json:"senu"`
+}
+
+type StopDtoM struct {
+	StopSenu  int16  `json:"stopsenu"`
+	StopCode  int32  `json:"stopcode"`
+	StopID    string `json:"stopid"`
+	StopDescr string `json:"stopdescr"`
+}

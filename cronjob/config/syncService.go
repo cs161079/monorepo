@@ -67,18 +67,21 @@ type SyncService interface {
 	SyncData() error
 	DeleteAll() error
 	InserttoDatabase() error
+	InitializeCron() error
+	Finalize() error
+	saveError(error) error
 
 	// Αυτή η μέθοδος θα ελέγχει και θα συγχρονίζει μόνο ότι πληροφορία χρειάζεται.
 	SyncData02() error
 }
 
 type syncService struct {
-	HelpLine         []models.Line
-	HelpRoute        []models.Route
+	HelpLine         map[int32]models.Line
+	HelpRoute        map[int32]models.Route
 	HelpRoute01      []models.Route01
 	HelpRoute02      []models.Route02
-	HelpStop         []models.Stop
-	HelpSchedule     []models.ScheduleMaster
+	HelpStop         map[int32]models.Stop
+	HelpSchedule     map[int32]models.ScheduleMaster
 	HelpScheduletime []models.ScheduleTime
 	// HelpScheduleline  []models.Scheduleline
 	dbConnection      *gorm.DB
@@ -91,8 +94,9 @@ type syncService struct {
 	schedule01Service service.Schedule01Service
 	// Εδώ κρατάμε τα κλειδιά των διαδρομών που έχουν συγχρονιστεί
 	// γιατί μου φέρνει Detail διαδρομών οι οποίες δεν υπάρχουν.
-	routeKeys map[int32]int32
+	// routeKeys map[int32]int32
 	//scheduleMasterKey map[int32]int32
+	cronJob models.OpswCronRuns
 }
 
 func NewSyncService(dbConnection *gorm.DB, restSrv service.RestService, lineSrv service.LineService,
@@ -107,7 +111,6 @@ func NewSyncService(dbConnection *gorm.DB, restSrv service.RestService, lineSrv 
 		scheduleService:   schedule,
 		schedule01Service: schedule01,
 		uVversionService:  uvVerSrv,
-		routeKeys:         make(map[int32]int32),
 		//scheduleMasterKey: make(map[int32]int32),
 	}
 }
@@ -136,10 +139,43 @@ func FixRecordOrder(rec *dao.UVersion01) {
 	}
 }
 
+func (s *syncService) Finalize() error {
+	s.cronJob.FINISHTIME = models.NewDateTime()
+	if err := s.dbConnection.Save(&s.cronJob).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *syncService) saveError(svError error) error {
+	s.cronJob.ERRORDESCR = svError.Error()
+	if err := s.dbConnection.Save(&s.cronJob).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *syncService) InitializeCron() error {
+	s.cronJob = models.OpswCronRuns{
+		RUNTIME: models.NewDateTime(),
+	}
+	dbResult := s.dbConnection.Create(&s.cronJob)
+	if dbResult.Error != nil {
+		return dbResult.Error
+	}
+	logger.INFO(fmt.Sprintf("CronJob ID:%d run started ", s.cronJob.ID))
+	return nil
+}
+
 func (s *syncService) InserttoDatabase() error {
+
+	var allLines []models.Line = make([]models.Line, 0)
+	for lineKey := range s.HelpLine {
+		allLines = append(allLines, s.HelpLine[lineKey])
+	}
 	// Εισαγωγή γραμμών
 	txt := s.dbConnection.Begin()
-	if err := s.lineService.WithTrx(txt).InsertChunkArray(1000, s.HelpLine); err != nil {
+	if err := s.lineService.WithTrx(txt).InsertChunkArray(1000, allLines); err != nil {
 		txt.Rollback()
 		return err
 	}
@@ -148,9 +184,14 @@ func (s *syncService) InserttoDatabase() error {
 		return err
 	}
 	logger.INFO("Η εισαγωγή γραμμών στην βάση δεδομένων ολοκληρώθηκε.")
+
+	var allRoutes []models.Route = make([]models.Route, 0)
+	for routeKey := range s.HelpRoute {
+		allRoutes = append(allRoutes, s.HelpRoute[routeKey])
+	}
 	// Εισαγωγή διαδρομών
 	txt = s.dbConnection.Begin()
-	if err := s.routeService.WithTrx(txt).InserChunkArray(10000, s.HelpRoute); err != nil {
+	if err := s.routeService.WithTrx(txt).InserChunkArray(10000, allRoutes); err != nil {
 		txt.Rollback()
 		return err
 	}
@@ -167,9 +208,14 @@ func (s *syncService) InserttoDatabase() error {
 	if err := txt.Commit().Error; err != nil {
 		return err
 	}
+
+	var allStops []models.Stop = make([]models.Stop, 0)
+	for stopKey := range s.HelpStop {
+		allStops = append(allStops, s.HelpStop[stopKey])
+	}
 	// Εισαγωγή Στάσεων
 	txt = s.dbConnection.Begin()
-	if err := s.stopService.WithTrx(txt).InsertChunkArray(1000, s.HelpStop); err != nil {
+	if err := s.stopService.WithTrx(txt).InsertChunkArray(1000, allStops); err != nil {
 		txt.Rollback()
 		return err
 	}
@@ -188,8 +234,13 @@ func (s *syncService) InserttoDatabase() error {
 		return err
 	}
 
+	var allSchedules []models.ScheduleMaster = make([]models.ScheduleMaster, 0)
+	for sdcKey := range s.HelpSchedule {
+		allSchedules = append(allSchedules, s.HelpSchedule[sdcKey])
+	}
+
 	txt = s.dbConnection.Begin()
-	if err := s.scheduleService.WithTrx(txt).InsertScheduleChunkArray(10000, s.HelpSchedule); err != nil {
+	if err := s.scheduleService.WithTrx(txt).InsertScheduleChunkArray(10000, allSchedules); err != nil {
 		return err
 	}
 	logger.INFO("Η εισαγωγή το δρομολογίων στην βάση δεδομένων ολοκληρώθηκε.")
@@ -426,7 +477,7 @@ func (s *syncService) syncLines() error {
 	}
 	// TODO: Το έκοψα γιατί δεν θα κάνω εδώ το Delete
 	logger.INFO("\tFetch lines data...")
-	s.HelpLine = make([]models.Line, 0)
+	s.HelpLine = make(map[int32]models.Line)
 	for _, ln := range response.Data.([]any) {
 		lineOasa := lineSrv.GetMapper().GenDtLineOasa(ln.(map[string]interface{}))
 		line := lineSrv.GetMapper().OasaToLine(lineOasa)
@@ -434,7 +485,7 @@ func (s *syncService) syncLines() error {
 		// if _, ok := s.lineKeys[line.Line_Code]; !ok {
 		// 	s.lineKeys[line.Line_Code] = line.Line_Code
 		// }
-		s.HelpLine = append(s.HelpLine, line)
+		s.HelpLine[int32(line.LineCode)] = line
 	}
 	return nil
 }
@@ -463,6 +514,7 @@ func (s *syncService) syncRoutes() error {
 	// Δεν θα χρησιμοποιήσουμε τοπικό πίνακα
 	// var routeArray []models.Route = make([]models.Route, 0)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
+	s.HelpRoute = make(map[int32]models.Route)
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
@@ -474,32 +526,34 @@ func (s *syncService) syncRoutes() error {
 		if len(recordArr) < 6 {
 			return fmt.Errorf("Η γραμμή του Record  είναι ελλειπής.")
 		}
-		rt := models.Route{}
-		num, err := utils.StrToInt32(recordArr[1])
+		recLineCode, err := utils.StrToInt32(recordArr[1])
 		if err != nil {
 			return err
-		}
-		rt.LnCode = *num
-		num, err = utils.StrToInt32(recordArr[0])
-		if err != nil {
-			return err
-		}
-		rt.RouteCode = *num
-		if _, ok := s.routeKeys[rt.RouteCode]; !ok {
-			s.routeKeys[rt.RouteCode] = rt.RouteCode
 		}
 
-		rt.RouteDescr = recordArr[2]
-		rt.RouteDescrEng = recordArr[3]
-		num, err = utils.StrToInt32(recordArr[4])
-		if err != nil {
-			return err
-		}
-		rt.RouteType = int8(*num)
-		fl32 := utils.StrToFloat32(recordArr[5])
-		rt.RouteDistance = fl32
+		// Ελέγχουμε εάν υπάρχει γραμμή κωδικό ίδο με αυτό που έχει η διαδρομή.
+		if _, ok := s.HelpLine[*recLineCode]; ok {
+			rt := models.Route{}
+			rt.LnCode = *recLineCode
+			num, err := utils.StrToInt32(recordArr[0])
+			if err != nil {
+				return err
+			}
+			rt.RouteCode = *num
 
-		s.HelpRoute = append(s.HelpRoute, rt)
+			rt.RouteDescr = recordArr[2]
+			rt.RouteDescrEng = recordArr[3]
+			num, err = utils.StrToInt32(recordArr[4])
+			if err != nil {
+				return err
+			}
+			rt.RouteType = int8(*num)
+			fl32 := utils.StrToFloat32(recordArr[5])
+			rt.RouteDistance = fl32
+
+			//s.HelpRoute = append(s.HelpRoute, rt)
+			s.HelpRoute[rt.RouteCode] = rt
+		}
 	}
 
 	return nil
@@ -526,7 +580,8 @@ func (s *syncService) syncStops() error {
 	// }
 	// defer file.Close() // Make sure to close the file when done
 
-	s.HelpStop = make([]models.Stop, 0)
+	// s.HelpStop = make([]models.Stop, 0)
+	s.HelpStop = make(map[int32]models.Stop)
 	// Εδώ η διαδικασία μας γυρνάει από το API έναν πίνακα με τα Record σε γραμμή χωρισμένα τα πεδία με κόμμα
 	logger.INFO("Get Stop data from OASA Server...")
 	for _, rec := range response.Data.([]string) {
@@ -571,7 +626,8 @@ func (s *syncService) syncStops() error {
 		st.Destinations = recordArr[11]
 		st.DestinationsEng = recordArr[12]
 
-		s.HelpStop = append(s.HelpStop, st)
+		// s.HelpStop = append(s.HelpStop, st)
+		s.HelpStop[st.StopCode] = st
 
 		// TODO: Αλλαγή δεν θα γίνετα
 
@@ -615,18 +671,22 @@ func (s *syncService) syncRouteStops() error {
 			return fmt.Errorf("Τα δεδομένα της γραμμής είναι ελλειπής.")
 		}
 
-		rt := models.Route02{}
-		num32, err := utils.StrToInt32(row[1])
+		recRouteCode, err := utils.StrToInt32(row[1])
 		if err != nil {
 			return err
 		}
-		rt.RtCode = *num32
-		if _, ok := s.routeKeys[rt.RtCode]; ok {
-			num32, err := utils.StrToInt32(row[2])
-			if err != nil {
-				return err
-			}
-			rt.StpCode = *num32
+		_, ok1 := s.HelpRoute[*recRouteCode]
+
+		recStopCode, err := utils.StrToInt32(row[2])
+		if err != nil {
+			return err
+		}
+		_, ok2 := s.HelpStop[*recStopCode]
+
+		if ok1 && ok2 {
+			rt := models.Route02{}
+			rt.RtCode = *recRouteCode
+			rt.StpCode = *recStopCode
 			num16, err := utils.StrToInt16(row[3])
 			if err != nil {
 				return err
@@ -672,13 +732,13 @@ func (s *syncService) syncRouteDetails() error {
 			return fmt.Errorf("Τα δεδομένα της γραμμής είναι ελλειπής.")
 		}
 
-		rt := models.Route01{}
-		num32, err := utils.StrToInt32(row[1])
+		recRouteCode, err := utils.StrToInt32(row[1])
 		if err != nil {
 			return err
 		}
-		rt.RtCode = *num32
-		if _, ok := s.routeKeys[rt.RtCode]; ok {
+		if _, ok := s.HelpRoute[*recRouteCode]; ok {
+			rt := models.Route01{}
+			rt.RtCode = *recRouteCode
 			num16, err := utils.StrToInt16(row[2])
 			if err != nil {
 				return err
@@ -691,7 +751,6 @@ func (s *syncService) syncRouteDetails() error {
 
 			s.HelpRoute01 = append(s.HelpRoute01, rt)
 		}
-
 	}
 	return nil
 }
@@ -723,7 +782,8 @@ func (s *syncService) syncScheduleMaster() error {
 	// }
 	// defer file.Close() // Make sure to close the file when done
 
-	s.HelpSchedule = make([]models.ScheduleMaster, 0)
+	// s.HelpSchedule = make([]models.ScheduleMaster, 0)
+	s.HelpSchedule = make(map[int32]models.ScheduleMaster)
 	for _, rec := range response.Data.([]string) {
 
 		// Γράφουμε κάθε γραμμή των δεδομένων στο αρχείο.
@@ -753,7 +813,8 @@ func (s *syncService) syncScheduleMaster() error {
 				rt.SDCMonths = recField
 			}
 		}
-		s.HelpSchedule = append(s.HelpSchedule, rt)
+		// s.HelpSchedule = append(s.HelpSchedule, rt)
+		s.HelpSchedule[rt.SDCCode] = rt
 	}
 	return nil
 }

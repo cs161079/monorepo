@@ -4,13 +4,40 @@ metadata:
   name: oauth-ingress
   namespace: oasa-telemat
   annotations:
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
-      add_header Content-Security-Policy "upgrade-insecure-requests;";
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "/"
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   rules:
   - host: oauth.opsw.gr
+    http:
+      paths:
+      - path: /keycloak/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: keycloak-svc
+            port:
+              number: 8080
+  tls: 
+    - hosts: 
+        - oauth.opsw.gr
+      secretName: tls-secret-v2
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: admin-oauth-ingress
+  namespace: oasa-telemat
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/x-forwarded-prefix: "/"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  rules:
+  - host: oauth-admin.opsw.gr
     http:
       paths:
       - path: /
@@ -19,9 +46,8 @@ spec:
           service:
             name: keycloak-svc
             port:
-              number: 8080
+              number: 9000
   tls: 
-    - 
-      hosts: 
+    - hosts: 
         - oauth.opsw.gr
       secretName: tls-secret-v2

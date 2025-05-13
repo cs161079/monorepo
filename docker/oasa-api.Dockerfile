@@ -12,12 +12,20 @@ ENV GO111MODULE=on \
     
 WORKDIR /app
 
-RUN mkdir common webApplication webApplication/config webApplication/controllers
+RUN mkdir common \
+    webApplication \
+    webApplication/config \
+    webApplication/controllers \
+    webApplication/db \
+    db \
+    db/migrations
 
 COPY common/ common/
 # COPY api/ api/
 COPY webApplication/config webApplication/config
 COPY webApplication/controllers webApplication/controllers
+COPY webApplication/keycloak webApplication/keycloak
+COPY webApplication/db/migrations/ db/migrations/
 
 #COPY go.sum go.sum
 COPY go.mod go.mod
