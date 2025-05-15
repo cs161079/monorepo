@@ -1,1 +1,0 @@
-ALTER TABLE opswCronRuns ADD COLUMN errorDescr VARCHAR(200);

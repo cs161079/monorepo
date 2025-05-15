@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS TestTbl (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    field1 VARCHAR(10),
-    field2 INT
-);

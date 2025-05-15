@@ -160,17 +160,15 @@ func DatabaseMigrations() error {
 		return err
 	}
 
-	if err := m.Force(1); err != nil {
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("Migration Up failed: %v", err)
 	}
+	logger.INFO("Migrate UP become successfully!")
 
-	if err := m.Up(); err != nil {
-		return fmt.Errorf("Migration Up failed: %v", err)
-	}
-
-	if err := m.Down(); err != nil {
-		return fmt.Errorf("Migration Down failed. %v", err)
-	}
+	// if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+	// 	return fmt.Errorf("Migration Down failed. %v", err)
+	// }
+	// logger.INFO("Migrate DONW become successfully!")
 
 	logger.INFO("Migrations ran successfully!")
 	return nil

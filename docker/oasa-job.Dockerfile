@@ -1,4 +1,4 @@
-FROM golang:1.22
+FROM golang:1.23
 
 # Set Go environment variables
 # Set environment variables

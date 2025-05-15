@@ -11,7 +11,7 @@ spec:
         spec:
           containers:
           - name: oasa-job-container
-            image: oulisnikos/oasa-cron:0.0.3
+            image: oulisnikos/oasa-cron:0.0.1-prod
             envFrom:
             - configMapRef:
                 name: enviroment-config-job

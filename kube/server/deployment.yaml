@@ -16,7 +16,7 @@ spec:
         app: oasa-server
     spec:
       containers:
-      - image: oulisnikos/oasa-serv:0.0.1-prod
+      - image: oulisnikos/oasa-serv:0.0.2-prod
         # resources:
         #   requests:
         #     cpu: "250m"
