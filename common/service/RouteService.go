@@ -1,8 +1,6 @@
 package service
 
 import (
-	"encoding/json"
-
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
@@ -22,27 +20,29 @@ type RouteService interface {
 	Route01InsertArr([]models.Route01) ([]models.Route01, error)
 	Route01InsertChunkArray(chunkSize int, allData []models.Route01) error
 
-	SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error)
+	SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.RouteDto, error)
 	SelectRouteWithStops(int32) (*models.RouteDto, error)
 	SelectRouteDetails(int32) ([]models.Route01, error)
 	SelectRouteStop(int32) ([]models.Route02Dto, error)
 }
 
 type routeService struct {
-	repo     repository.RouteRepository
-	repo02   repository.Route02Repository
-	repo01   repository.Route01Repository
-	mapper01 mapper.Route01Mapper
+	repo        repository.RouteRepository
+	repo02      repository.Route02Repository
+	repo01      repository.Route01Repository
+	mapper01    mapper.Route01Mapper
+	routeMapper mapper.RouteMapper
 }
 
 func NewRouteService(repo repository.RouteRepository,
 	repo01 repository.Route01Repository,
 	repo02 repository.Route02Repository) RouteService {
 	return &routeService{
-		repo:     repo,
-		repo02:   repo02,
-		repo01:   repo01,
-		mapper01: mapper.NewRouteDetailMapper(),
+		repo:        repo,
+		repo02:      repo02,
+		repo01:      repo01,
+		mapper01:    mapper.NewRouteDetailMapper(),
+		routeMapper: mapper.NewRouteMapper(),
 	}
 }
 
@@ -164,8 +164,12 @@ func (s routeService) DeleteRoute01() error {
 	return s.repo01.Delete()
 }
 
-func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error) {
-	return s.repo.SelectByLineCodeWithStops(line_code)
+func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.RouteDto, error) {
+	origData, err := s.repo.SelectByLineCodeWithStops(line_code)
+	if err != nil {
+		return nil, err
+	}
+	return s.routeMapper.RouteToRouteDto(*origData)
 }
 
 func (s routeService) SelectRouteWithStops(routeCode int32) (*models.RouteDto, error) {
@@ -175,37 +179,7 @@ func (s routeService) SelectRouteWithStops(routeCode int32) (*models.RouteDto, e
 	if err != nil {
 		return nil, err
 	}
-
-	// Transform data to JSON
-	byts, err := json.Marshal(origData)
-	if err != nil {
-		return nil, err
-	}
-
-	// From JSON fill Dto Record
-	var result models.RouteDto
-	err = json.Unmarshal(byts, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	// Transform Route02s to Array of StopDto
-	result.Stops = make([]models.StopDto02, 0)
-	for _, rec := range origData.Route02s {
-		bytss, err := json.Marshal(rec.Stop)
-		if err != nil {
-			return nil, err
-		}
-
-		var stpDto models.StopDto02
-		err = json.Unmarshal(bytss, &stpDto)
-		if err != nil {
-			return nil, err
-		}
-		result.Stops = append(result.Stops, stpDto)
-	}
-
-	return &result, nil
+	return s.routeMapper.RouteToRouteDto(*origData)
 }
 
 func (s routeService) SelectRouteDetails(routeCode int32) ([]models.Route01, error) {

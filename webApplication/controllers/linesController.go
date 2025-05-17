@@ -65,7 +65,7 @@ func (t LineControllerImplementation) GetLineInfo(ctx *gin.Context) {
 		return
 	}
 
-	var route *models.Route
+	var route *models.RouteDto
 	route, err = t.routeSvc.SelectFirstRouteByLinecodeWithStops(*line_code)
 
 	if err != nil {
