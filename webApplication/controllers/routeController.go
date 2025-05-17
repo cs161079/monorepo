@@ -40,7 +40,7 @@ func (u RouteControllerImplementation) stopListByRouteCode(ctx *gin.Context) {
 		return
 	}
 
-	var rt models.Route
+	var rt models.RouteDto
 	data, err := u.routeSvc.SelectRouteWithStops(*route_code)
 	if err != nil {
 		// ctx.AbortWithStatusJSON(http.StatusOK, map[string]any{"error": err.Error(), "code": "err-001"})

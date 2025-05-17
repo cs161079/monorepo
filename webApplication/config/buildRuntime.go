@@ -48,7 +48,8 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.RouteController,
 	stopCtrl controllers.StopController, schedCtrl controllers.ScheduleController, compCtrl controllers.ComponentController,
-	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController, notifyCtrl controllers.AdminController) *App {
+	testCtrl controllers.TestController, oasaCtrl controllers.OasaNativeController, notifyCtrl controllers.AdminController,
+	extCtrl controllers.ExtApiController) *App {
 	gin.SetMode(gin.ReleaseMode)
 	eng := gin.New()
 	// eng.Use(cors.Default())
@@ -65,6 +66,7 @@ func NewApp(db *gorm.DB, lineCtrl controllers.LineController, rtCtr controllers.
 	testCtrl.AddRoutes(eng)
 	oasaCtrl.AddRouters(eng)
 	notifyCtrl.AddRouters(eng)
+	extCtrl.AddRouters(eng)
 
 	//db.AutoMigrate(&models.Line{}, &models.Route{}, &models.Stop{}, &models.Route01{}, &models.Route02{}, &models.ScheduleMaster{}, &models.ScheduleTime{})
 
@@ -148,6 +150,7 @@ func BuildInRuntime() (*App, error) {
 		controllers.TestControllerConstructor,
 		controllers.NewOasaNativeController,
 		controllers.NewAdminController,
+		controllers.NewExtApiController,
 		NewApp,
 	}
 
