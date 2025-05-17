@@ -49,6 +49,7 @@ type StopDto02 struct {
 	StopID       string `json:"stop_id"`
 	StopDescr    string `json:"stop_descr"`
 	StopDescrEng string `json:"stop_descr_eng"`
+	Senu         int16  `json:"senu"`
 }
 
 type StopOasa struct {

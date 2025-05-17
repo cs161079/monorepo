@@ -31,7 +31,8 @@ type ScheduleTime struct {
 	Sort      int      `json:"sort" gorm:"column:sort"`
 	Direction int      `json:"direction" gorm:"column:direction;primaryKey"`
 
-	ScheduleMaster ScheduleMaster `json:"schedule" gorm:"foreignKey:SDCCd;references:SDCCode"`
+	// Το έσβησα γιατ΄ιδεν ήταν υποχρεωτικό για το Preload.
+	//ScheduleMaster ScheduleMaster `json:"schedule" gorm:"foreignKey:SDCCd;references:SDCCode"`
 }
 
 func (ScheduleTime) TableName() string {

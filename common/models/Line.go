@@ -63,7 +63,7 @@ type LineDto struct {
 	Line_Descr     string         `json:"line_descr"`
 	Line_Descr_Eng string         `json:"line_descr_eng"`
 	Mld_master     int8           `json:"mld_master"`
-	Routes         []Route        `json:"routes"`
+	Routes         []RouteDto     `json:"routes"`
 	Schedule       ScheduleMaster `json:"schedule"`
 }
 
