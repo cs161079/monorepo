@@ -32,6 +32,17 @@ type Route struct {
 	Route02s []Route02 `json:"stops" gorm:"foreignKey:RtCode;references:RouteCode"`
 }
 
+type RouteDto struct {
+	RouteCode     int32   `json:"route_code"`
+	LnCode        int32   `json:"line_code"` // FK to Line.LineCode
+	RouteDescr    string  `json:"route_descr"`
+	RouteDescrEng string  `json:"route_descr_eng"`
+	RouteType     int8    `json:"route_type"`
+	RouteDistance float32 `json:"route_distance"`
+	// Route02s      []Route02Dto02 `json:"stops"`
+	Stops []StopDto02 `json:"stops"`
+}
+
 func (Route) TableName() string {
 	return db.ROUTETABLE
 }

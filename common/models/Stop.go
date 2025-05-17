@@ -44,6 +44,13 @@ func (Stop) TableName() string {
 	return db.STOPTABLE
 }
 
+type StopDto02 struct {
+	StopCode     int32  `json:"stop_code"`
+	StopID       string `json:"stop_id"`
+	StopDescr    string `json:"stop_descr"`
+	StopDescrEng string `json:"stop_descr_eng"`
+}
+
 type StopOasa struct {
 	Stop_code       int32   `json:"StopCode" oasa:"StopCode"`
 	Stop_id         string  `json:"stopId" oasa:"StopID"`
@@ -68,6 +75,8 @@ type StopDto struct {
 	Distance    float64 `json:"distance"`
 }
 
+// Αυτό μπορεί να το αλλάξω.
+// Το ήθελα για την σελίδα της στάσης
 type StopDtoBasicInfo struct {
 	Stop_code  int32  `json:"stop_code"`
 	Stop_descr string `json:"stop_descr"`

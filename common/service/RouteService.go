@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
@@ -21,7 +23,7 @@ type RouteService interface {
 	Route01InsertChunkArray(chunkSize int, allData []models.Route01) error
 
 	SelectFirstRouteByLinecodeWithStops(line_code int32) (*models.Route, error)
-	SelectRouteWithStops(int32) (*models.Route, error)
+	SelectRouteWithStops(int32) (*models.RouteDto, error)
 	SelectRouteDetails(int32) ([]models.Route01, error)
 	SelectRouteStop(int32) ([]models.Route02Dto, error)
 }
@@ -166,8 +168,44 @@ func (s routeService) SelectFirstRouteByLinecodeWithStops(line_code int32) (*mod
 	return s.repo.SelectByLineCodeWithStops(line_code)
 }
 
-func (s routeService) SelectRouteWithStops(routeCode int32) (*models.Route, error) {
-	return s.repo.SelectByRouteCodeWithStops(routeCode)
+func (s routeService) SelectRouteWithStops(routeCode int32) (*models.RouteDto, error) {
+
+	// Get Data from Database
+	origData, err := s.repo.SelectByRouteCodeWithStops(routeCode)
+	if err != nil {
+		return nil, err
+	}
+
+	// Transform data to JSON
+	byts, err := json.Marshal(origData)
+	if err != nil {
+		return nil, err
+	}
+
+	// From JSON fill Dto Record
+	var result models.RouteDto
+	err = json.Unmarshal(byts, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	// Transform Route02s to Array of StopDto
+	result.Stops = make([]models.StopDto02, 0)
+	for _, rec := range origData.Route02s {
+		bytss, err := json.Marshal(rec.Stop)
+		if err != nil {
+			return nil, err
+		}
+
+		var stpDto models.StopDto02
+		err = json.Unmarshal(bytss, &stpDto)
+		if err != nil {
+			return nil, err
+		}
+		result.Stops = append(result.Stops, stpDto)
+	}
+
+	return &result, nil
 }
 
 func (s routeService) SelectRouteDetails(routeCode int32) ([]models.Route01, error) {
