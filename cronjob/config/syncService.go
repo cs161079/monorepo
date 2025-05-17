@@ -603,7 +603,7 @@ func (s *syncService) syncStops() error {
 		st.StopCode = *num32
 		st.StopID = recordArr[1]
 		st.StopDescr = recordArr[2]
-		st.StopDescr = recordArr[3]
+		st.StopDescrEng = recordArr[3]
 		st.StopStreet = recordArr[4]
 		st.StopStreetEng = recordArr[5]
 		num32, err = utils.StrToInt32(recordArr[6])
