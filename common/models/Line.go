@@ -46,6 +46,7 @@ type Line struct {
 	LineDescr    string `json:"line_descr" gorm:"column:line_descr"`
 	LineDescrEng string `json:"line_descr_eng" gorm:"column:line_descr_eng"`
 	MldMaster    int16  `json:"mld_master" gorm:"column:mld_master"`
+	LineType     int8   `json:"line_type" gorm:"column:line_type"`
 
 	Routes []Route `json:"routes" gorm:"foreignKey:LnCode;references:LineCode"`
 }
@@ -63,9 +64,16 @@ type LineDto struct {
 	Line_Descr     string         `json:"line_descr"`
 	Line_Descr_Eng string         `json:"line_descr_eng"`
 	Mld_master     int8           `json:"mld_master"`
+	LineType       int8           `json:"line_type"`
 	Routes         []RouteDto     `json:"routes"`
 	Schedule       ScheduleMaster `json:"schedule"`
 }
+
+const (
+	// *ΓΙΑ ΤΙΣ ΜΕΤΑΒΛΗΤΕΣ ΠΟΥ ΔΙΑΜΟΙΡΑΖΟΜΑΙ ΜΕΣΩ CONTEXT *
+	LINE_TYPE_BUS     = 0
+	LINE_TYPE_TROLLEY = 1
+)
 
 type ComboRec struct {
 	Code  int32  `json:"code"`
@@ -79,6 +87,7 @@ type LineDto01 struct {
 	Line_Id        string `json:"line_id"`
 	Line_Descr     string `json:"line_descr"`
 	Line_Descr_Eng string `json:"line_descr_eng"`
+	Line_Type      int8   `json:"line_type"`
 }
 
 type LineM struct {

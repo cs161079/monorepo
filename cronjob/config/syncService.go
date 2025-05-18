@@ -481,6 +481,13 @@ func (s *syncService) syncLines() error {
 	for _, ln := range response.Data.([]any) {
 		lineOasa := lineSrv.GetMapper().GenDtLineOasa(ln.(map[string]interface{}))
 		line := lineSrv.GetMapper().OasaToLine(lineOasa)
+		line.LineType = models.LINE_TYPE_BUS
+		if len(line.LineID) == 2 {
+			_, err := utils.StrToInt8(line.LineID)
+			if err == nil {
+				line.LineType = models.LINE_TYPE_TROLLEY
+			}
+		}
 
 		// if _, ok := s.lineKeys[line.Line_Code]; !ok {
 		// 	s.lineKeys[line.Line_Code] = line.Line_Code

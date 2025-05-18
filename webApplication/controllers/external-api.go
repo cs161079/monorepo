@@ -52,4 +52,5 @@ type LineExtDto struct {
 	LineDescr    string `json:"line_descr"`
 	LineDescrEng string `json:"line_descr_eng"`
 	MldMaster    int16  `json:"mld_master"`
+	LineType     int8   `json:"line_type"`
 }
