@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"log"
+	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,352 +15,39 @@ import (
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var opswLogger logger.OpswLogger
 
 func main() {
-	start := time.Now()
 	// Depedencies
 	restSrv := service.NewRestService()
 	opswLogger = logger.CreateLogger()
-	lineSrv := service.NewLineService(nil)
 
-	response := restSrv.OasaRequestApi00("webGetLinesWithMLInfo", nil)
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
-	}
-	// TODO: Το έκοψα γιατί δεν θα κάνω εδώ το Delete
-	opswLogger.INFO("Fetch Line data completed successfully.")
-	var lines []models.LineM
-	var _ []interface{} = make([]interface{}, 0)
-	var lineOasaArr []models.LineOasa = make([]models.LineOasa, 0)
-	for _, ln := range response.Data.([]any) {
-		lineOasa := lineSrv.GetMapper().GenDtLineOasa(ln.(map[string]interface{}))
-		lineOasaArr = append(lineOasaArr, lineOasa)
-	}
-
-	bts, err := json.Marshal(lineOasaArr)
+	f, err := os.OpenFile("getLines_response.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	defer f.Close()
 	if err != nil {
 		opswLogger.ERROR(err.Error())
 		return
 	}
-	json.Unmarshal(bts, &lines)
 
-	response = restSrv.OasaRequestApi02("getRoutes")
+	if _, err := f.WriteString("Appended line.\n"); err != nil {
+		opswLogger.ERROR(err.Error())
+		return
+	}
+	intVal, err := utils.StrToInt64("020")
+	opswLogger.INFO(fmt.Sprintf("In value %d", *intVal))
+
+	response := restSrv.OasaRequestApi02("getLines")
 	if response.Error != nil {
 		opswLogger.ERROR(response.Error.Error())
 		return
 	}
 
-	opswLogger.INFO("Going to insert to Database.")
-
-	response = restSrv.OasaRequestApi02("getRoutes")
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
+	for _, rec := range response.Data.([]string) {
+		f.WriteString(fmt.Sprintf("%v\n", rec))
 	}
-
-	opswLogger.INFO("Fetch Route data completed successfully.")
-
-	routes, err := analyzeRouteData(response.Data.([]string))
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-
-	sort.Slice(routes, func(i, j int) bool {
-		return routes[i].LnCode < routes[j].LnCode
-	})
-
-	var rtMap map[int32][]models.RouteM = make(map[int32][]models.RouteM)
-	var rtArr []models.RouteM = make([]models.RouteM, 0)
-	var lnCode = routes[0].LnCode
-	for idx, rt01 := range routes {
-		if lnCode != rt01.LnCode {
-			rtMap[lnCode] = rtArr
-			lnCode = rt01.LnCode
-			rtArr = make([]models.RouteM, 0)
-		}
-		bts, err := json.Marshal(rt01)
-		if err != nil {
-			opswLogger.ERROR(err.Error())
-			return
-		}
-		var rtM models.RouteM
-		json.Unmarshal(bts, &rtM)
-		rtArr = append(rtArr, rtM)
-		if idx == (len(routes) - 1) {
-			rtMap[lnCode] = rtArr
-		}
-	}
-
-	opswLogger.INFO("\tFetching Route details & information data...")
-	response = restSrv.OasaRequestApi02("getRoute_detail")
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
-	}
-
-	routeDetailsArr, err := analyzeRouteDetailsData(response.Data.([]string))
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-
-	sort.Slice(routeDetailsArr, func(i, j int) bool {
-		return routeDetailsArr[i].RtCode < routeDetailsArr[j].RtCode
-	})
-
-	var curRouteCode = routeDetailsArr[0].RtCode
-	var rtDetailsMap map[int32][]models.Route01M = make(map[int32][]models.Route01M)
-	var rtDetail []models.Route01 = make([]models.Route01, 0)
-	for indx, rec := range routeDetailsArr {
-		if curRouteCode != rec.RtCode {
-			bts, err := json.Marshal(rtDetail)
-			if err != nil {
-				opswLogger.ERROR(err.Error())
-				return
-			}
-			var rtM []models.Route01M
-			json.Unmarshal(bts, &rtM)
-			rtDetailsMap[curRouteCode] = rtM
-			rtDetail = make([]models.Route01, 0)
-			curRouteCode = rec.RtCode
-		}
-		rtDetail = append(rtDetail, rec)
-		if indx == len(routeDetailsArr)-1 {
-			bts, err := json.Marshal(rtDetail)
-			if err != nil {
-				opswLogger.ERROR(err.Error())
-				return
-			}
-			var rtM []models.Route01M
-			json.Unmarshal(bts, &rtM)
-			rtDetailsMap[curRouteCode] = rtM
-		}
-	}
-
-	// ========= Συγχρονισμός των δεδομένων των στάσεων από το ΟΑΣΑ server ==============
-	//               Δημιουργώ ένα Map για γρήγορη επιλογή των στάσεων.
-	opswLogger.INFO("Fetching stops data per route ...")
-	response = restSrv.OasaRequestApi02("getStops")
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
-	}
-
-	stopsArr, err := analyzeStopData(response.Data.([]string))
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-	var stopMap map[int32]models.StopM = make(map[int32]models.StopM)
-	for _, stop := range stopsArr {
-		bts, err := json.Marshal(stop)
-		if err != nil {
-			opswLogger.ERROR(err.Error())
-			return
-		}
-		var stopM models.StopM
-		json.Unmarshal(bts, &stopM)
-		stopMap[stopM.StopCode] = stopM
-	}
-
-	opswLogger.INFO("Fetching stops data per route ...")
-	response = restSrv.OasaRequestApi02("getRouteStops")
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
-	}
-
-	routeStopArr, err := analyzeRouteStopData(response.Data.([]string))
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-
-	sort.Slice(routeStopArr, func(i, j int) bool {
-		if routeStopArr[i].Route.RouteCode == routeStopArr[j].RtCode {
-			return routeStopArr[i].Senu < routeStopArr[j].Senu // compare Field2 if Field1 is equal
-		}
-		return routeStopArr[i].RtCode < routeStopArr[j].RtCode // primary sort by Field1
-	})
-
-	var routeStopMap map[int32][]models.StopM = make(map[int32][]models.StopM)
-	var routeCurr = routeStopArr[0].RtCode
-	var stopArr []models.StopM = make([]models.StopM, 0)
-	for idx, rec := range routeStopArr {
-		if routeCurr != rec.RtCode {
-			routeStopMap[routeCurr] = stopArr
-			routeCurr = rec.RtCode
-			stopArr = make([]models.StopM, 0)
-		}
-
-		if _, ok := stopMap[int32(rec.StpCode)]; ok {
-			bts, err := json.Marshal(stopMap[int32(rec.StpCode)])
-			if err != nil {
-				opswLogger.ERROR(err.Error())
-				return
-			}
-			var stopM models.StopM
-			json.Unmarshal(bts, &stopM)
-			stopM.StopSenu = rec.Senu
-			stopArr = append(stopArr, stopM)
-			if idx == (len(routeStopArr) - 1) {
-				routeStopMap[routeCurr] = stopArr
-			}
-		}
-
-	}
-
-	// ============================= Συγχρονισμός Προγραμμάτων και δρομολογίων =========================================
-	opswLogger.INFO("Fetchig Route Scedule infromation data...")
-	response = restSrv.OasaRequestApi02("getSched_Cats")
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
-	}
-
-	scheduleMasterMap, err := analyzeScheduleMaster(response.Data.([]string))
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-
-	// ============================= Συγχρονισμός Προγραμμάτων και δρομολογίων =========================================
-	opswLogger.INFO("Fetching Schedule details and times ...")
-	response = restSrv.OasaRequestApi02("getSched_entries")
-	if response.Error != nil {
-		opswLogger.ERROR(response.Error.Error())
-		return
-	}
-
-	scheduleEntries, err := analyzeScheduleEntries(response.Data.([]string))
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-
-	var currLnCode = scheduleEntries[0].LnCode
-	var currSdcCode = scheduleEntries[0].SDCCd
-	var finalScheduleMap map[int32][]models.ScheduleMasterM = make(map[int32][]models.ScheduleMasterM)
-	var scheduleArr []models.ScheduleMasterM = make([]models.ScheduleMasterM, 0)
-	var schedule models.ScheduleMasterM
-	bts, err = json.Marshal(scheduleMasterMap[int32(currSdcCode)])
-	if err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-	schedule = models.ScheduleMasterM{}
-	json.Unmarshal(bts, &schedule)
-	schedule.Times = make([]models.ScheduleTimeM, 0)
-	for _, entry := range scheduleEntries {
-		if currLnCode != entry.LnCode {
-			finalScheduleMap[int32(currLnCode)] = scheduleArr
-			currLnCode = entry.LnCode
-			currSdcCode = entry.SDCCd
-			scheduleArr = make([]models.ScheduleMasterM, 0)
-			bts, err := json.Marshal(scheduleMasterMap[int32(currSdcCode)])
-			if err != nil {
-				opswLogger.ERROR(err.Error())
-				return
-			}
-			schedule = models.ScheduleMasterM{}
-			json.Unmarshal(bts, &schedule)
-			schedule.Times = make([]models.ScheduleTimeM, 0)
-		} else if currSdcCode != entry.SDCCd {
-			scheduleArr = append(scheduleArr, schedule)
-			currSdcCode = entry.SDCCd
-
-			bts, err := json.Marshal(scheduleMasterMap[int32(currSdcCode)])
-			if err != nil {
-				opswLogger.ERROR(err.Error())
-				return
-			}
-			schedule = models.ScheduleMasterM{}
-			json.Unmarshal(bts, &schedule)
-			schedule.Times = make([]models.ScheduleTimeM, 0)
-		}
-
-		btsEntry, err := json.Marshal(entry)
-		if err != nil {
-			opswLogger.ERROR(err.Error())
-			return
-		}
-		var scheduleTM models.ScheduleTimeM = models.ScheduleTimeM{}
-		err = json.Unmarshal(btsEntry, &scheduleTM)
-		if err != nil {
-			opswLogger.ERROR(err.Error())
-		}
-		schedule.Times = append(schedule.Times, scheduleTM)
-	}
-
-	opswLogger.INFO("Schedule sychronization finished successfully.")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// ====================== Connect to Mongo Database ======================
-	clientOpts := options.Client().ApplyURI("mongodb://localhost:27017").
-		SetServerSelectionTimeout(5 * time.Second)
-
-	client, err := mongo.Connect(ctx, clientOpts)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
-	// ======================================================================
-
-	// ================ Create or Use exist Database and Create Collection ==============
-	database := client.Database("testdb")
-	collection := database.Collection("line")
-	if err := collection.Drop(ctx); err != nil {
-		opswLogger.ERROR(err.Error())
-		return
-	}
-	collection = database.Collection("line")
-
-	for _, line := range lines {
-		line.Routes = rtMap[int32(line.LineCode)]
-		line.Schedules = finalScheduleMap[int32(line.LineCode)]
-		for indx01, route := range line.Routes {
-			line.Routes[indx01].Stops = append(line.Routes[indx01].Stops, routeStopMap[route.RouteCode]...)
-			line.Routes[indx01].Details = append(line.Routes[indx01].Details, rtDetailsMap[route.RouteCode]...)
-		}
-
-		// Εισαγωγή στην MongoDb
-		_, err = collection.InsertOne(ctx, line)
-		if err != nil {
-			opswLogger.ERROR(err.Error())
-		}
-		opswLogger.INFO("Insert to Database completed successfully. [line_code: " + strconv.Itoa(line.LineCode) + "].")
-	}
-
-	opswLogger.INFO("Synchronized Lines and Routes completed successfully.")
-
-	// var lnCodCurr int32 = routesRec[0].LnCode
-
-	// var lineRoutes []interface{} = make([]interface{}, 0)
-	// for i, rec := range routesRec {
-	// 	if rec.LnCode != int32(lnCodCurr) {
-	// 		err = insertToMongo(ctx, collection, lineRoutes, int32(lnCodCurr))
-	// 		if err != nil {
-	// 			opswLogger.ERROR(err.Error())
-	// 			return
-	// 		}
-	// 		lineRoutes = make([]interface{}, 0)
-	// 		lnCodCurr = rec.LnCode
-	// 	}
-
-	// 	lineRoutes = append(lineRoutes, routesRec[i])
-	// }
-	fmt.Printf("=========================================================================================================\n")
-	fmt.Printf("============================ Sychronize make %.2f seconds to complete. ==================================\n", time.Since(start).Seconds())
-	fmt.Printf("=========================================================================================================\n")
-
+	return
 }
 
 func convertStrToTime(strVal string) *time.Time {

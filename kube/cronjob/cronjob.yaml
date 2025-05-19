@@ -4,14 +4,14 @@ metadata:
   name: oasa-cronjob
   namespace: oasa-telemat
 spec:
-  schedule: "*/10 * * * *"  # Runs every day at 21pm
+  schedule: "*/30 * * * *"  # Runs every day at 21pm
   jobTemplate:
     spec:
       template:
         spec:
           containers:
           - name: oasa-job-container
-            image: oulisnikos/oasa-cron:0.0.1-prod
+            image: oulisnikos/oasa-cron:0.0.2-prod
             envFrom:
             - configMapRef:
                 name: enviroment-config-job
