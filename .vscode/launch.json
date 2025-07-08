@@ -24,6 +24,13 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/webApplication/main.go"
+        },
+        {
+            "name": "Trip Planner",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/trip-planner/main.go"
         }
     ]
 }

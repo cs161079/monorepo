@@ -15,6 +15,9 @@ type Schedule01Repository interface {
 	InsertSchedule01(input models.ScheduleTime) error
 	InsterSchedule01Array(input []models.ScheduleTime) ([]models.ScheduleTime, error)
 	DeleteAll() error
+
+	// -------------------- For GTFS -------------------------------------
+	ScheduleTimeList(lineCode int, sdcCode int, direction int) ([]models.ScheduleTime, error)
 }
 
 type schedule01Repository struct {
@@ -78,4 +81,15 @@ func (r schedule01Repository) DeleteAll() error {
 		return err
 	}
 	return nil
+}
+
+func (r schedule01Repository) ScheduleTimeList(lineCode int, sdcCode int, direction int) ([]models.ScheduleTime, error) {
+	var dbData []models.ScheduleTime = make([]models.ScheduleTime, 0)
+	dbResults := r.DB.Table(db.SCHEDULETIMETABLE).
+		Where("ln_code = ? AND sdc_cd=? AND direction = ?", lineCode, sdcCode, direction).
+		Order("sort").Find(&dbData)
+	if dbResults.Error != nil {
+		return nil, dbResults.Error
+	}
+	return dbData, nil
 }

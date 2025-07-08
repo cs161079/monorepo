@@ -22,6 +22,8 @@ type StopRepository interface {
 	SelectClosestStops(float64, float64, float32, float32) ([]models.StopDto, error)
 	SelectClosestStops02(float64, float64) ([]models.StopDto, error)
 	WithTx(*gorm.DB) stopRepository
+
+	SelectAll() ([]models.Stop, error)
 }
 
 type stopRepository struct {
@@ -163,4 +165,13 @@ func (r stopRepository) SelectClosestStops02(latitude float64, longtitude float6
 		stops = stops[:20]
 	}
 	return stops, nil
+}
+
+func (s stopRepository) SelectAll() ([]models.Stop, error) {
+	var dbData []models.Stop = make([]models.Stop, 0)
+	dbResults := s.DB.Table(db.STOPTABLE).Find(&dbData)
+	if dbResults.Error != nil {
+		return nil, dbResults.Error
+	}
+	return dbData, nil
 }

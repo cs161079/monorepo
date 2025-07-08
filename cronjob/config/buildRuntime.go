@@ -91,6 +91,12 @@ func InitializeApplication() {
                                                                   |_|   |_|                                    /_/_/_/
 	:: OASA Synchtonization Data application (v%s) ::`+"\n\n", os.Getenv("application.version"))))
 	//os.Stdout = originalStdout
+
+	// Database Migration Proccess
+	err = db.DatabaseMigrations()
+	if err != nil {
+		logger.ERROR(err.Error())
+	}
 }
 
 func BuildInRuntime() (*App, error) {

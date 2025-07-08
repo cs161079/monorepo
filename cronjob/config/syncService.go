@@ -482,7 +482,7 @@ func (s *syncService) syncLines() error {
 		lineOasa := lineSrv.GetMapper().GenDtLineOasa(ln.(map[string]interface{}))
 		line := lineSrv.GetMapper().OasaToLine(lineOasa)
 		line.LineType = models.LINE_TYPE_BUS
-		if len(line.LineID) == 2 {
+		if len(line.LineID) <= 2 {
 			_, err := utils.StrToInt8(line.LineID)
 			if err == nil {
 				line.LineType = models.LINE_TYPE_TROLLEY
@@ -609,10 +609,10 @@ func (s *syncService) syncStops() error {
 		}
 		st.StopCode = *num32
 		st.StopID = recordArr[1]
-		st.StopDescr = recordArr[2]
-		st.StopDescrEng = recordArr[3]
-		st.StopStreet = recordArr[4]
-		st.StopStreetEng = recordArr[5]
+		st.StopDescr = strings.Trim(recordArr[2], " ")
+		st.StopDescrEng = strings.Trim(recordArr[3], " ")
+		st.StopStreet = strings.Trim(recordArr[4], " ")
+		st.StopStreetEng = strings.Trim(recordArr[5], " ")
 		num32, err = utils.StrToInt32(recordArr[6])
 		if err != nil {
 			return err
@@ -630,8 +630,8 @@ func (s *syncService) syncStops() error {
 			return err
 		}
 		st.StopAmea = *num8
-		st.Destinations = recordArr[11]
-		st.DestinationsEng = recordArr[12]
+		st.Destinations = strings.Trim(recordArr[11], " ")
+		st.DestinationsEng = strings.Trim(recordArr[12], " ")
 
 		// s.HelpStop = append(s.HelpStop, st)
 		s.HelpStop[st.StopCode] = st

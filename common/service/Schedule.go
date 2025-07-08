@@ -13,6 +13,23 @@ type ScheduleService interface {
 	InsertScheduleChunkArray(chunkSize int, allData []models.ScheduleMaster) error
 	SelectByLineSdcCodeWithTimes(int32, int32) (*models.ScheduleMaster, error)
 	SelectCurrentSchedule(int32) (*models.ScheduleMaster, error)
+
+	ScheduleMasterList() ([]models.ScheduleMaster, error)
+	// =============================================================
+	//
+	// Με αυτή τη διαδικασία ανασύρουμε από τη βάση δεδομένων\n
+	//
+	// τα Master Schedule για την γραμμή με κωδικό.\n
+	//
+	// @param lineCode: Κωδικός γραμμής
+	//
+	//
+	// @return []models.ScheduleTimeDto
+	//
+	// @return error
+	//
+	// =============================================================
+	ScheduleMasterDistinct(int32) ([]models.ScheduleTimeDto, error)
 }
 
 type scheduleService struct {
@@ -71,4 +88,12 @@ func (s scheduleService) SelectByLineSdcCodeWithTimes(lineCode int32, sdcCode in
 
 func (s scheduleService) SelectCurrentSchedule(linCode int32) (*models.ScheduleMaster, error) {
 	return s.repo.SelectCurrentSchedule(linCode)
+}
+
+func (s scheduleService) ScheduleMasterList() ([]models.ScheduleMaster, error) {
+	return s.repo.ScheduleMasterList()
+}
+
+func (s scheduleService) ScheduleMasterDistinct(lineCode int32) ([]models.ScheduleTimeDto, error) {
+	return s.repo.ScheduleMasterDistinct(lineCode)
 }

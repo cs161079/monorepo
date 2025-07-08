@@ -1,13 +1,13 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    
-    <meta name="go-import" content="cloud.google.com/go git https://github.com/googleapis/google-cloud-go">
-    <meta name="go-source" content="cloud.google.com/go https://github.com/googleapis/google-cloud-go https://github.com/GoogleCloudPlatform/gcloud-golang/tree/master{/dir} https://github.com/GoogleCloudPlatform/gcloud-golang/tree/master{/dir}/{file}#L{line}">
-    <meta name="robots" content="noindex">
-    <meta http-equiv="refresh" content="0; url=https://pkg.go.dev/cloud.google.com/go/auth">
-  </head>
-  <body>
-    Redirecting to <a href="https://pkg.go.dev/cloud.google.com/go/auth">pkg.go.dev/cloud.google.com/go/auth</a>.
-  </body>
-</html>
+// <!DOCTYPE html>
+// <html>
+//   <head>
+
+//     <meta name="go-import" content="cloud.google.com/go git https://github.com/googleapis/google-cloud-go">
+//     <meta name="go-source" content="cloud.google.com/go https://github.com/googleapis/google-cloud-go https://github.com/GoogleCloudPlatform/gcloud-golang/tree/master{/dir} https://github.com/GoogleCloudPlatform/gcloud-golang/tree/master{/dir}/{file}#L{line}">
+//     <meta name="robots" content="noindex">
+//     <meta http-equiv="refresh" content="0; url=https://pkg.go.dev/cloud.google.com/go/auth">
+//   </head>
+//   <body>
+//     Redirecting to <a href="https://pkg.go.dev/cloud.google.com/go/auth">pkg.go.dev/cloud.google.com/go/auth</a>.
+//   </body>
+// </html>

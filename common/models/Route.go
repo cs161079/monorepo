@@ -79,3 +79,11 @@ type RouteDtoM struct {
 	Stops      []StopDtoM `json:"stops"`
 	Details    []Route01M `json:"details"`
 }
+
+type RouteWithLine struct {
+	LineID     string `json:"line_id"`
+	LnCode     int32  `json:"line_code"`
+	RouteCode  int32  `json:"route_code" `
+	RouteType  int8   `json:"route_type"`
+	RouteDescr string `json:"route_descr"`
+}

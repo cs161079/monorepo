@@ -1,0 +1,1 @@
+ALTER TABLE line ADD line_type INT;

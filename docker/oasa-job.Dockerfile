@@ -15,6 +15,7 @@ RUN mkdir common cronjob cronjob/config cronjob/dao
 COPY common/ common/
 COPY cronjob/config cronjob/config
 COPY cronjob/dao cronjob/dao
+COPY cronjob/db/migrations/release/ db/migrations/
 
 # Δοκιμή να μην αντιγράψω το sum. Μπορεί να παραχθεί από την εντολή go mod tidy
 #COPY go.sum go.sum

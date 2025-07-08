@@ -11,6 +11,8 @@ type Schedule01Service interface {
 	DeleteAll() error
 	InsertArray(allData []models.ScheduleTime) ([]models.ScheduleTime, error)
 	InsertSchedule01ChunkArray(chunkSize int, allData []models.ScheduleTime) error
+	// -------------------- For GTFS ----------------------------
+	ScheduleTimeList(lineCode int, sdcCode int, direction int) ([]models.ScheduleTime, error)
 }
 
 type schedule01Service struct {
@@ -69,4 +71,8 @@ func (s schedule01Service) InsertSchedule01ChunkArray(chunkSize int, allData []m
 		//logger.INFO(fmt.Sprintf("Προστέθηκαν οι γραμμές από %d έως %d.", stratIndex, endIndex-1))
 	}
 	return nil
+}
+
+func (s schedule01Service) ScheduleTimeList(lineCode int, sdcCode int, direction int) ([]models.ScheduleTime, error) {
+	return s.repo.ScheduleTimeList(lineCode, sdcCode, direction)
 }

@@ -15,6 +15,8 @@ type StopService interface {
 	WithTrx(*gorm.DB) stopService
 	SelectByCode(int32) (*models.StopDtoBasicInfo, error)
 	SelectClosestStops02(latitude float64, longtitude float64) ([]models.StopDto, error)
+
+	SelectStops() ([]models.Stop, error)
 }
 
 type stopService struct {
@@ -83,4 +85,8 @@ func (s stopService) SelectByCode(stop_code int32) (*models.StopDtoBasicInfo, er
 
 func (s stopService) SelectClosestStops02(latitude float64, longtitude float64) ([]models.StopDto, error) {
 	return s.repo.SelectClosestStops02(latitude, longtitude)
+}
+
+func (s stopService) SelectStops() ([]models.Stop, error) {
+	return s.repo.SelectAll()
 }

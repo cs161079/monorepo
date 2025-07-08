@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cs161079/monorepo/common/db"
 	"github.com/cs161079/monorepo/common/models"
@@ -28,6 +29,12 @@ type RouteRepository interface {
 	List01() ([]models.Route, error)
 	WithTx(*gorm.DB) routeRepository
 	DeleteAll() error
+	PassengersCount(busID int, routeID int) (*models.Bus_Capacity, error)
+
+	// ---------------------- For Trip Planner -----------------------------------
+	RouteList() ([]models.RouteWithLine, error)
+	RouteStopList(int32) ([]models.Route02, error)
+	//----------------------------------------------------------------------------
 }
 
 type routeRepository struct {
@@ -147,4 +154,43 @@ func (r routeRepository) ExtraArrivalInfo(stop_code int32) ([]models.StopArrival
 		return nil, dbResult.Error
 	}
 	return result, nil
+}
+
+func (r routeRepository) PassengersCount(busID int, routeID int) (*models.Bus_Capacity, error) {
+	now := time.Now()
+	from := now.Add(-1 * 5 * time.Minute)
+	to := now.Add(1 * 5 * time.Minute)
+	strFrom := from.Format("2006-01-02 15:04:05") // YYYY-MM-DD HH:mm:ss format
+	strTo := to.Format("2006-01-02 15:04:05")
+
+	var result models.Bus_Capacity
+	dbResult := r.DB.Table(db.BUSCAPACITY).Where(
+		"date_time BETWEEN ? and ? AND bus_id = ? AND route_id = ?", strFrom, strTo, busID, routeID).Order("date_time desc").Limit(1).Find(&result)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return &result, nil
+}
+
+func (r routeRepository) RouteList() ([]models.RouteWithLine, error) {
+	var dbData []models.RouteWithLine = make([]models.RouteWithLine, 0)
+	dbResults := r.DB.Select("route.route_code, route.ln_code, line.line_id, route.route_type, route.route_descr").
+		Table(db.ROUTETABLE).Joins("LEFT JOIN line on route.ln_code=line.line_code").
+		Order("route.route_code, route.ln_code").
+		Find(&dbData)
+	if dbResults.Error != nil {
+		return nil, dbResults.Error
+	}
+	return dbData, nil
+}
+
+func (r routeRepository) RouteStopList(routeCode int32) ([]models.Route02, error) {
+	var dbData []models.Route02 = make([]models.Route02, 0)
+	dbResult := r.DB.Table(db.ROUTESTOPSTABLE).
+		Where("rt_code=?", routeCode).
+		Order("senu").Find(&dbData)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return dbData, nil
 }

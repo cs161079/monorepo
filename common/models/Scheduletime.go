@@ -117,3 +117,17 @@ type ScheduleTimeM struct {
 	Sort      int      `json:"sort"`
 	Direction int      `json:"direction"`
 }
+
+// Για αυτά τα δεδομένα
+// +---------+--------+--------------+
+// | ln_code | sdc_cd | sdc_months   |
+// +---------+--------+--------------+
+// |     938 |     86 | 000001110000 |
+// |     938 |     87 | 000001110000 |
+// |     938 |     88 | 000001110000 |
+// +---------+--------+--------------+
+type ScheduleTimeDto struct {
+	LnCode    int    `json:"line_code"` // FK to line.line_code
+	SDCCd     int    `json:"sdc_code"`  // FK to schedulemaster.sdc_code
+	SDCMonths string `json:"sdc_months"`
+}

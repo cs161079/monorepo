@@ -24,7 +24,7 @@ func NewNotificationService() NotificationService {
 func (s notificationServiceImpl) SendPushNotification(notEntity models.Notification) error {
 	// Initialize a context and authenticate using the service account file
 	ctx := context.Background()
-	client, err := fcm.NewService(ctx, option.WithCredentialsFile("var/bus-telematics-firebase.json"))
+	client, err := fcm.NewService(ctx, option.WithCredentialsFile("various/bus-telematics-firebase.json"))
 	if err != nil {
 		return fmt.Errorf("failed to create FCM client: %v", err)
 	}

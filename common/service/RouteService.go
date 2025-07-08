@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+
 	"github.com/cs161079/monorepo/common/mapper"
 	"github.com/cs161079/monorepo/common/models"
 	"github.com/cs161079/monorepo/common/repository"
@@ -24,6 +26,12 @@ type RouteService interface {
 	SelectRouteWithStops(int32) (*models.RouteDto, error)
 	SelectRouteDetails(int32) ([]models.Route01, error)
 	SelectRouteStop(int32) ([]models.Route02Dto, error)
+	PassengersCount(int, int) (*models.BusCapacityDt02, error)
+
+	// ---------------- For Trip Planner -----------------
+	RouteList() ([]models.RouteWithLine, error)
+	RouteStopList(int32) ([]models.Route02, error)
+	RouteSelect(int32) (*models.Route, error)
 }
 
 type routeService struct {
@@ -188,4 +196,30 @@ func (s routeService) SelectRouteDetails(routeCode int32) ([]models.Route01, err
 
 func (s routeService) SelectRouteStop(routecode int32) ([]models.Route02Dto, error) {
 	return s.repo02.SelectRouteStops(routecode)
+}
+
+func (s routeService) PassengersCount(busID int, routeID int) (*models.BusCapacityDt02, error) {
+	dbRec, err := s.repo.PassengersCount(busID, routeID)
+	if err != nil {
+		return nil, err
+	}
+	var result models.BusCapacityDt02 = models.BusCapacityDt02{}
+	bts, err := json.Marshal(dbRec)
+	if err != nil {
+		return nil, err
+	}
+	json.Unmarshal(bts, &result)
+	return &result, nil
+}
+
+func (s routeService) RouteList() ([]models.RouteWithLine, error) {
+	return s.repo.RouteList()
+}
+
+func (s routeService) RouteStopList(routeCode int32) ([]models.Route02, error) {
+	return s.repo.RouteStopList(routeCode)
+}
+
+func (s routeService) RouteSelect(routeCode int32) (*models.Route, error) {
+	return s.repo.SelectByCode(routeCode)
 }

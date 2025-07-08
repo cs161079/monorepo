@@ -18,17 +18,20 @@ RUN mkdir common \
     webApplication/controllers \
     webApplication/db \
     db \
-    db/migrations
+    db/migrations \
+    var 
 
 COPY common/ common/
 # COPY api/ api/
 COPY webApplication/config webApplication/config
 COPY webApplication/controllers webApplication/controllers
 COPY webApplication/keycloak webApplication/keycloak
-COPY webApplication/db/migrations/ db/migrations/
+COPY webApplication/db/migrations/release/ db/migrations/
+COPY webApplication/var var/
 
 #COPY go.sum go.sum
 COPY go.mod go.mod
+COPY auth auth
 COPY webApplication/main.go .
 COPY webApplication/.env .
 

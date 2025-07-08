@@ -16,6 +16,8 @@ type StopArrival struct {
 	Line_id    string `json:"line_id"`
 	NextTime   int16  `json:"next_time"`
 	Last_Time  int16  `json:"last_time"`
+	Passengers int    `json:"passengers"`
+	Capacity   int    `json:"capacity"`
 }
 
 type BusLocation struct {
@@ -24,4 +26,9 @@ type BusLocation struct {
 	Cs_lat     float64 `json:"cs_lat" oasa:"CS_LAT"`
 	Cs_lng     float64 `json:"cs_lng" oasa:"CS_LNG"`
 	Route_code int32   `json:"route_code" oasa:"ROUTE_CODE"`
+}
+
+type BusΟccupancy struct {
+	Capacity   int `json:"capacity"`
+	Passengers int `json:"passengers"`
 }

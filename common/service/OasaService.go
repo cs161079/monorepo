@@ -17,6 +17,7 @@ type OasaServiceImpl struct {
 	restSrv   RestService
 	mapper    mapper.OasaMapper
 	routeRepo repository.RouteRepository
+	// routeSrv service.RouteService
 }
 
 func NewOasaService(routeRepo repository.RouteRepository, mapper mapper.OasaMapper, rest RestService) OasaService {
@@ -57,10 +58,19 @@ func (c OasaServiceImpl) GetBusArrival(stop_code int32) ([]models.StopArrival, e
 		extraInfo[i].Btime2 = 999
 		extraInfo[i].Last_Time = 999
 		extraInfo[i].NextTime = 999
+
 		for _, rec01 := range structedResponse {
 			if rec.Route_code == rec01.Route_code {
+				// if extraInfo[i].Btime2 ==
 				if extraInfo[i].Btime2 == 999 {
+					extraInfo[i].Veh_code = rec01.Veh_code
 					extraInfo[i].Btime2 = rec01.Btime2
+					var capacityInfo, err = c.routeRepo.PassengersCount(int(rec01.Veh_code), int(rec01.Route_code))
+					if err != nil {
+						return nil, err
+					}
+					extraInfo[i].Capacity = int(capacityInfo.Bus_Cap)
+					extraInfo[i].Passengers = int(capacityInfo.Bus_Pass)
 				} else if extraInfo[i].NextTime == 999 {
 					extraInfo[i].NextTime = rec01.Btime2
 				} else if extraInfo[i].Last_Time == 999 {

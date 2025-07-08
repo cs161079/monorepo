@@ -21,6 +21,9 @@ type ScheduleRepository interface {
 
 	SelectByLineSdcCodeWithTimes(int32, int32) (*models.ScheduleMaster, error)
 	SelectCurrentSchedule(int32) (*models.ScheduleMaster, error)
+
+	ScheduleMasterList() ([]models.ScheduleMaster, error)
+	ScheduleMasterDistinct(int32) ([]models.ScheduleTimeDto, error)
 }
 
 type scheduleRepository struct {
@@ -118,4 +121,25 @@ func (r scheduleRepository) SelectCurrentSchedule(lineCode int32) (*models.Sched
 	}
 
 	return &result, nil
+}
+
+func (r scheduleRepository) ScheduleMasterList() ([]models.ScheduleMaster, error) {
+	var dbData []models.ScheduleMaster = make([]models.ScheduleMaster, 0)
+	if dbResult := r.DB.Table(db.SCHEDULEMASTERTABLE).Select("sdc_code, sdc_descr_eng, sdc_months, sdc_days").Find(&dbData); dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return dbData, nil
+}
+
+func (r scheduleRepository) ScheduleMasterDistinct(lineCode int32) ([]models.ScheduleTimeDto, error) {
+	var dbData []models.ScheduleTimeDto = make([]models.ScheduleTimeDto, 0)
+	dbResult := r.DB.Table(db.SCHEDULETIMETABLE).
+		Select("scheduletime.ln_code, scheduletime.sdc_cd, schedulemaster.sdc_months").
+		Joins(fmt.Sprintf("LEFT JOIN %s ON schedulemaster.sdc_code = scheduletime.sdc_cd", db.SCHEDULEMASTERTABLE)).
+		Where("scheduletime.ln_code=?", lineCode).
+		Find(&dbData)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return dbData, nil
 }

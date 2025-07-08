@@ -49,6 +49,7 @@ const (
 	ROUTEDETAILTABLE    = "route01"
 	SYNCVERSIONSTABLE   = "syncversions"
 	OPSWCRONRUNS        = "opswCronRuns"
+	BUSCAPACITY         = "bus_capacity"
 	// ****************************************************
 )
 
