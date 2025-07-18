@@ -24,6 +24,7 @@ type ScheduleRepository interface {
 
 	ScheduleMasterList() ([]models.ScheduleMaster, error)
 	ScheduleMasterDistinct(int32) ([]models.ScheduleTimeDto, error)
+	ScheduleTimeListByLineCode(int32, int) ([]models.ScheduleTimeDto, error)
 }
 
 type scheduleRepository struct {
@@ -134,9 +135,23 @@ func (r scheduleRepository) ScheduleMasterList() ([]models.ScheduleMaster, error
 func (r scheduleRepository) ScheduleMasterDistinct(lineCode int32) ([]models.ScheduleTimeDto, error) {
 	var dbData []models.ScheduleTimeDto = make([]models.ScheduleTimeDto, 0)
 	dbResult := r.DB.Table(db.SCHEDULETIMETABLE).
-		Select("scheduletime.ln_code, scheduletime.sdc_cd, schedulemaster.sdc_months").
+		Distinct("scheduletime.ln_code, scheduletime.sdc_cd, schedulemaster.sdc_months, schedulemaster.sdc_days").
 		Joins(fmt.Sprintf("LEFT JOIN %s ON schedulemaster.sdc_code = scheduletime.sdc_cd", db.SCHEDULEMASTERTABLE)).
 		Where("scheduletime.ln_code=?", lineCode).
+		Find(&dbData)
+	if dbResult.Error != nil {
+		return nil, dbResult.Error
+	}
+	return dbData, nil
+}
+
+func (r scheduleRepository) ScheduleTimeListByLineCode(lineCode int32, direction int) ([]models.ScheduleTimeDto, error) {
+	var dbData []models.ScheduleTimeDto = make([]models.ScheduleTimeDto, 0)
+	dbResult := r.DB.Table(db.SCHEDULEMASTERTABLE).
+		Select("scheduletime.ln_code, scheduletime.sdc_cd, schedulemaster.sdc_months, schedulemaster.sdc_days, scheduletime.start_time").
+		Joins(fmt.Sprintf("LEFT JOIN %s ON schedulemaster.sdc_code = scheduletime.sdc_cd", db.SCHEDULETIMETABLE)).
+		Where("scheduletime.ln_code=? AND scheduletime.direction=?", lineCode, direction).
+		Order("schedulemaster.sdc_code, scheduletime.sort").
 		Find(&dbData)
 	if dbResult.Error != nil {
 		return nil, dbResult.Error

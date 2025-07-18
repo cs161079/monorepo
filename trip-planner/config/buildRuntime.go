@@ -30,32 +30,41 @@ func NewApp(db *gorm.DB, logger logger.OpswLogger, tripSrv TripPlannerService) *
 func (a App) Boot() {
 	start := time.Now()
 	a.tripPlanner.IntializeService()
-	logger.INFO("Prepare GTFS Data for Stops.")
-	// err := a.tripPlanner.StopsData()
-	// if err != nil {
-	// 	a.logger.ERROR(err.Error())
-	// }
 
-	// logger.INFO("Prepare GTFS Data for Route.")
-	// err = a.tripPlanner.RoutesData()
-	// if err != nil {
-	// 	a.logger.ERROR(err.Error())
-	// }
+	logger.INFO("Prepare GTFS Data for Agency.")
+	err := a.tripPlanner.AgencyData()
+	if err != nil {
+		a.logger.ERROR(err.Error())
+		return
+	}
 
-	// logger.INFO("Prepare GTFS Data for Calendar Data.")
-	// err = a.tripPlanner.CalendarData()
-	// if err != nil {
-	// 	a.logger.ERROR(err.Error())
-	// }
+	logger.INFO("Prepare data GTFS for Stops.")
+	err = a.tripPlanner.StopsData()
+	if err != nil {
+		a.logger.ERROR(err.Error())
+		return
+	}
 
-	// logger.INFO("Prepare GTFS Data for Trip Data.")
-	// err = a.tripPlanner.TripsData()
-	// if err != nil {
-	// 	a.logger.ERROR(err.Error())
-	// }
+	logger.INFO("Prepare GTFS Data for Route.")
+	err = a.tripPlanner.RoutesData()
+	if err != nil {
+		a.logger.ERROR(err.Error())
+	}
+
+	logger.INFO("Prepare GTFS Data for Calendar Data.")
+	err = a.tripPlanner.CalendarData()
+	if err != nil {
+		a.logger.ERROR(err.Error())
+	}
+
+	logger.INFO("Prepare GTFS Data for Trip Data.")
+	err = a.tripPlanner.TripsData()
+	if err != nil {
+		a.logger.ERROR(err.Error())
+	}
 
 	logger.INFO("Prepare GTFS Data for Stop Times Data.")
-	err := a.tripPlanner.StopTimesData()
+	err = a.tripPlanner.StopTimesData()
 	if err != nil {
 		a.logger.ERROR(err.Error())
 	}

@@ -127,7 +127,9 @@ type ScheduleTimeM struct {
 // |     938 |     88 | 000001110000 |
 // +---------+--------+--------------+
 type ScheduleTimeDto struct {
-	LnCode    int    `json:"line_code"` // FK to line.line_code
-	SDCCd     int    `json:"sdc_code"`  // FK to schedulemaster.sdc_code
-	SDCMonths string `json:"sdc_months"`
+	LnCode    int      `json:"line_code"` // FK to line.line_code
+	SDCCd     int      `json:"sdc_code"`  // FK to schedulemaster.sdc_code
+	SDCMonths string   `json:"sdc_months"`
+	SDCDays   string   `json:"sdc_days"`
+	StartTime OpswTime `json:"start_time"`
 }

@@ -30,6 +30,7 @@ type ScheduleService interface {
 	//
 	// =============================================================
 	ScheduleMasterDistinct(int32) ([]models.ScheduleTimeDto, error)
+	ScheduleTimeListByLineCode(int32, int) ([]models.ScheduleTimeDto, error)
 }
 
 type scheduleService struct {
@@ -96,4 +97,8 @@ func (s scheduleService) ScheduleMasterList() ([]models.ScheduleMaster, error) {
 
 func (s scheduleService) ScheduleMasterDistinct(lineCode int32) ([]models.ScheduleTimeDto, error) {
 	return s.repo.ScheduleMasterDistinct(lineCode)
+}
+
+func (s scheduleService) ScheduleTimeListByLineCode(lineCode int32, direction int) ([]models.ScheduleTimeDto, error) {
+	return s.repo.ScheduleTimeListByLineCode(lineCode, direction)
 }
