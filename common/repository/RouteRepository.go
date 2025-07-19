@@ -146,7 +146,7 @@ func (r routeRepository) InsertArray(entiryArr []models.Route) ([]models.Route, 
 
 func (r routeRepository) ExtraArrivalInfo(stop_code int32) ([]models.StopArrival, error) {
 	var result []models.StopArrival
-	dbResult := r.DB.Select("route.route_code", "line.line_code", "line.line_descr", "line.line_id, line.line_type").Table(db.ROUTESTOPSTABLE).Joins(
+	dbResult := r.DB.Select("route.route_code", "line.line_code", "route.route_descr", "line.line_id, line.line_type").Table(db.ROUTESTOPSTABLE).Joins(
 		"LEFT JOIN route on route02.rt_code=route.route_code").Joins(
 		"LEFT JOIN line on route.ln_code=line.line_code").Where(
 		"route02.stp_code=?", stop_code).Find(&result)

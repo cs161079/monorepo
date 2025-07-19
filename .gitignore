@@ -6,3 +6,6 @@ go.sum
 
 cronjob/tmp
 webApplication/__debug_bin3873649647.exe
+webApplication/various/bus-telematics-firebase.json
+kube/certificate/private.key
+kube/certificate/certificate.crt

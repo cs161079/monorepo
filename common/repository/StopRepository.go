@@ -141,7 +141,7 @@ func (r stopRepository) SelectClosestStops02(latitude float64, longtitude float6
 	}
 	defer rows.Close()
 
-	var stops []models.StopDto
+	var stops []models.StopDto = make([]models.StopDto, 0)
 
 	for rows.Next() {
 		var stopDto models.StopDto
@@ -151,8 +151,9 @@ func (r stopRepository) SelectClosestStops02(latitude float64, longtitude float6
 		}
 		// mapper.MapStruct(stop, &stopDto)
 		stopDto.Distance = haversine(latitude, longtitude, stopDto.Stop_lat, stopDto.Stop_lng)
-		stops = append(stops, stopDto)
-
+		if stopDto.Distance < 1.5 {
+			stops = append(stops, stopDto)
+		}
 	}
 
 	// Sort by distance

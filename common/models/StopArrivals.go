@@ -10,7 +10,7 @@ type StopArrival struct {
 	Btime2     int16  `json:"time"`
 	Route_code int32  `json:"route_code"`
 	LineCode   int32  `json:"line_code"`
-	LineDescr  string `json:"line_descr"`
+	RouteDescr string `json:"route_descr"`
 	LineType   int8   `json:"line_type"`
 	Veh_code   int32  `json:"veh_code"`
 	Line_id    string `json:"line_id"`

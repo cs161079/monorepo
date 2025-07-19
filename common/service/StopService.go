@@ -83,7 +83,14 @@ func (s stopService) SelectByCode(stop_code int32) (*models.StopDtoBasicInfo, er
 	return &result, nil
 }
 
+func is_in_greece(lat float64, lng float64) bool {
+	return 34.8 <= lat && lat <= 41.8 && 19.3 <= lng && lng <= 28.3
+}
+
 func (s stopService) SelectClosestStops02(latitude float64, longtitude float64) ([]models.StopDto, error) {
+	if !is_in_greece(latitude, longtitude) {
+		return make([]models.StopDto, 0), nil
+	}
 	return s.repo.SelectClosestStops02(latitude, longtitude)
 }
 

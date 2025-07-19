@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/cs161079/monorepo/common/models"
 	logger "github.com/cs161079/monorepo/common/utils/goLogger"
@@ -21,10 +23,25 @@ func NewNotificationService() NotificationService {
 	return &notificationServiceImpl{}
 }
 
+func fixGoogleCredentials() ([]byte, error) {
+
+	data, err := ioutil.ReadFile("various/encoded_credentials.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	// Decode base64 content
+	return base64.StdEncoding.DecodeString(string(data))
+}
+
 func (s notificationServiceImpl) SendPushNotification(notEntity models.Notification) error {
 	// Initialize a context and authenticate using the service account file
 	ctx := context.Background()
-	client, err := fcm.NewService(ctx, option.WithCredentialsFile("various/bus-telematics-firebase.json"))
+	credentialsData, err := fixGoogleCredentials()
+	if err != nil {
+		return err
+	}
+	client, err := fcm.NewService(ctx, option.WithCredentialsJSON(credentialsData))
 	if err != nil {
 		return fmt.Errorf("failed to create FCM client: %v", err)
 	}

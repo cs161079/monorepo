@@ -27,7 +27,7 @@ COPY webApplication/config webApplication/config
 COPY webApplication/controllers webApplication/controllers
 COPY webApplication/keycloak webApplication/keycloak
 COPY webApplication/db/migrations/release/ db/migrations/
-COPY webApplication/var var/
+COPY webApplication/various various/
 
 #COPY go.sum go.sum
 COPY go.mod go.mod
