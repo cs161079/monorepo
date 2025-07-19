@@ -24,18 +24,23 @@ type ExtApiController interface {
 }
 
 type extApiControllerImpl struct {
-	connection *gorm.DB
-	verifier   *oidc.IDTokenVerifier
-	busSrv     service.BusService
-	routeSrv   service.RouteService
+	connection    *gorm.DB
+	verifier      *oidc.IDTokenVerifier
+	busSrv        service.BusService
+	routeSrv      service.RouteService
+	scheduleSrv   service.ScheduleService
+	schedule01Srv service.Schedule01Service
 }
 
-func NewExtApiController(dbConnection *gorm.DB, routeSrv service.RouteService, busSrv service.BusService, verif *oidc.IDTokenVerifier) ExtApiController {
+func NewExtApiController(dbConnection *gorm.DB, routeSrv service.RouteService, busSrv service.BusService,
+	verif *oidc.IDTokenVerifier, schedulSrv service.ScheduleService, schedule01Srv service.Schedule01Service) ExtApiController {
 	return &extApiControllerImpl{
-		connection: dbConnection,
-		verifier:   verif,
-		busSrv:     busSrv,
-		routeSrv:   routeSrv,
+		connection:    dbConnection,
+		verifier:      verif,
+		busSrv:        busSrv,
+		routeSrv:      routeSrv,
+		scheduleSrv:   schedulSrv,
+		schedule01Srv: schedule01Srv,
 	}
 }
 
@@ -46,6 +51,7 @@ func (c *extApiControllerImpl) AddRouters(eng *gin.Engine) {
 	apiGroup.GET("/lines/search", c.lineSearch)
 	apiGroup.GET("/routes/:line_code", c.routeByLineCode)
 	apiGroup.GET("/stops/:route_code", c.getRouteDtls)
+	apiGroup.GET("/schedule/:line_code/:direction", c.getSchedule)
 	apiGroup.GET("/traffic", c.getTrafficData)
 	apiGroup.POST("/capacity/:route_code/:bus_id", c.busCapacity)
 }
@@ -195,6 +201,42 @@ func (c *extApiControllerImpl) getRouteDtls(ctx *gin.Context) {
 
 }
 
+func (c *extApiControllerImpl) getSchedule(ctx *gin.Context) {
+	line_code, err := utils.StrToInt32(ctx.Param("line_code"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	direction, err := utils.StrToInt8(ctx.Param("direction"))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	scheduleRecs, err := c.scheduleSrv.ScheduleMasterDistinct(*line_code)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Internal Error on Database query for Master Schedule."})
+	}
+
+	selectedSdc := -1
+	currentMonth := time.Now().Month()
+	currentDay := time.Now().Weekday()
+	for _, rec := range scheduleRecs {
+		if (rec.SDCMonths[currentMonth-1] == '1') && (rec.SDCDays[currentDay] == '1') {
+			selectedSdc = rec.SDCCd
+			break
+		}
+	}
+
+	scheduleTimes, err := c.schedule01Srv.ScheduleTimeList(int(*line_code), selectedSdc, int(*direction))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Internal Error on Database query for Schedule Times."})
+	}
+
+	ctx.JSON(http.StatusOK, scheduleTimes)
+}
+
 type BusCapacityRequest struct {
 	Capacity   int32     `json:"capacity"`
 	Passengers int32     `json:"passengers"`
@@ -221,6 +263,7 @@ type LineSearchDto struct {
 type RouteOptsDto struct {
 	RouteCode  int32  `json:"code"`
 	RouteDescr string `json:"descr"`
+	RouteType  int    `json:"route_type"`
 }
 
 type BusCapDto struct {

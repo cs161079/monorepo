@@ -79,6 +79,7 @@ type StopDto struct {
 // Αυτό μπορεί να το αλλάξω.
 // Το ήθελα για την σελίδα της στάσης
 type StopDtoBasicInfo struct {
+	StopID     string `json:"stop_id"`
 	Stop_code  int32  `json:"stop_code"`
 	Stop_descr string `json:"stop_descr"`
 }

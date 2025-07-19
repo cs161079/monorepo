@@ -35,8 +35,8 @@ type TripPlannerService interface {
 	writeStopFile(stopRec []StopGTFS) error
 	writeRouteFile(routeRecs []RouteGTFS) error
 	writeCalendarFile([]CalendarGTFS) error
-	writeTripsFile([]TripGTFS) error
-	writeStopTimesFile([]StopTimesGTFS) error
+	writeTripsFile(*os.File, TripGTFS)
+	writeStopTimesFile(*os.File, StopTimesGTFS)
 }
 
 type tripPlannerServiceImp struct {
@@ -69,7 +69,7 @@ func (s *tripPlannerServiceImp) IntializeService() {
 func (s *tripPlannerServiceImp) AgencyData() error {
 	// Define folder and file path
 	// folderPath := "gtfs"
-	fileName := "stops.txt"
+	fileName := "agency.txt"
 	fullPath := filepath.Join(s.gtfsFolder, fileName)
 
 	// Create folder if it doesn't exist
@@ -257,7 +257,22 @@ func (s *tripPlannerServiceImp) TripsData() error {
 		return err
 	}
 
-	var result []TripGTFS = make([]TripGTFS, 0)
+	fileName := "trips.txt"
+	fullPath := filepath.Join(s.gtfsFolder, fileName)
+
+	// Create folder if it doesn't exist
+	err = os.MkdirAll(s.gtfsFolder, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	// Create or truncate the file
+	file, err := os.Create(fullPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writeLine(file, "route_id,service_id,trip_id,trip_headsign")
 
 	// var currenLine = -1
 	for _, rec := range routeData {
@@ -267,7 +282,12 @@ func (s *tripPlannerServiceImp) TripsData() error {
 			head = strings.Trim(parts[0], " ")
 		}
 
-		schedules, err := s.scheduleSrv.ScheduleMasterDistinct(rec.LnCode)
+		var direction = rec.RouteType
+		if direction == 2 {
+			direction = 0
+		}
+
+		schedules, err := s.scheduleSrv.ScheduleTimeListByLineCode(rec.LnCode, int(direction))
 		if err != nil {
 			return err
 		}
@@ -278,34 +298,42 @@ func (s *tripPlannerServiceImp) TripsData() error {
 			if direction == 2 {
 				direction = 0
 			}
-			scheduleTimes, err := s.schedule01Srv.ScheduleTimeList(rec02.LnCode, rec02.SDCCd, int(direction))
-			if err != nil {
-				return err
-			}
-			for _, rec03 := range scheduleTimes {
-				for k := 0; k <= count-1; k++ {
-					var srvId = fmt.Sprintf("%d_%d", rec02.SDCCd, k)
-					result = append(result, TripGTFS{
-						RouteId:   int(rec.RouteCode),
-						ServiceId: srvId,
-						TripId:    fmt.Sprintf("%d_%s_%d_%d", int(rec.RouteCode), srvId, rec03.Sort, k),
-						TripHead:  head,
-					})
-				}
+
+			for k := range count {
+				var srvId = fmt.Sprintf("%d_%d", rec02.SDCCd, k)
+				s.writeTripsFile(file, TripGTFS{
+					RouteId:   int(rec.RouteCode),
+					ServiceId: srvId,
+					TripId:    fmt.Sprintf("%d_%s_%s", int(rec.RouteCode), srvId, time.Time(rec02.StartTime).Format("1504")),
+					TripHead:  head,
+				})
 			}
 		}
-	}
-
-	if err := s.writeTripsFile(result); err != nil {
-		return err
 	}
 
 	return nil
 }
 
 func (s *tripPlannerServiceImp) StopTimesData() error {
-	var timeLayout = "15:04:05"
-	var result []StopTimesGTFS = make([]StopTimesGTFS, 0)
+	// var timeLayout = "15:04:05"
+	// var result []StopTimesGTFS = make([]StopTimesGTFS, 0)
+
+	fileName := "stop_times.txt"
+	fullPath := filepath.Join(s.gtfsFolder, fileName)
+
+	// Create folder if it doesn't exist
+	err := os.MkdirAll(s.gtfsFolder, os.ModePerm)
+	if err != nil {
+		return err
+	}
+	// Create or truncate the file
+	file, err := os.Create(fullPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	writeLine(file, "trip_id,arrival_time,departure_time,stop_id,stop_sequence")
 
 	routeData, err := s.routeSrv.RouteList()
 	if err != nil {
@@ -343,17 +371,35 @@ func (s *tripPlannerServiceImp) StopTimesData() error {
 			for k := 0; k <= count-1; k++ {
 				var srvId = fmt.Sprintf("%d_%d", schedMasterRec.SDCCd, k)
 				for _, schedTimeRec := range schedTime {
-					duration := time.Time(schedTimeRec.EndTime).Sub(time.Time(schedTimeRec.StartTime))
+					startTime := time.Time(schedTimeRec.StartTime)
+					endTime := time.Time(schedTimeRec.EndTime)
+
+					var found = false
+					if routeRec.RouteCode == 5486 && schedTimeRec.SDCCd == 87 {
+						found = true
+					}
+					if found {
+
+					}
+					// If end is before or equal to start, add 24 hours to end time
+					if !endTime.After(startTime) {
+						endTime = endTime.Add(24 * time.Hour)
+					}
+
+					duration := endTime.Sub(startTime)
 					intervals := len(routeStops) - 1
 					var timeSpace = duration.Seconds() / float64(intervals)
+					currentTime := time.Time(schedTimeRec.StartTime)
 					for _, stop := range routeStops {
-						result = append(result, StopTimesGTFS{
-							TripId:        fmt.Sprintf("%d_%s_%d_%d", int(routeRec.RouteCode), srvId, schedTimeRec.Sort, k),
+						recForWrite := StopTimesGTFS{
+							TripId:        fmt.Sprintf("%d_%s_%s", int(routeRec.RouteCode), srvId, time.Time(schedTimeRec.StartTime).Format("1504")),
 							StopSeq:       strconv.Itoa(int(stop.Senu)),
 							StopId:        strconv.Itoa(int(stop.StpCode)),
-							ArrivalTime:   time.Time(schedTimeRec.StartTime).Add(time.Duration(k*int(timeSpace)) * time.Second).Format(timeLayout),
-							DepartureTime: time.Time(schedTimeRec.StartTime).Add(time.Duration(k*int(timeSpace)) * time.Second).Format(timeLayout),
-						})
+							ArrivalTime:   convertToGTFSFormat(time.Time(schedTimeRec.StartTime), time.Time(schedTimeRec.EndTime), currentTime), //time.Time(currentTime).Format(timeLayout),
+							DepartureTime: convertToGTFSFormat(time.Time(schedTimeRec.StartTime), time.Time(schedTimeRec.EndTime), currentTime), //time.Time(currentTime).Format(timeLayout),
+						}
+						s.writeStopTimesFile(file, recForWrite)
+						currentTime = currentTime.Add(time.Duration(timeSpace) * time.Second)
 					}
 
 				}
@@ -362,67 +408,22 @@ func (s *tripPlannerServiceImp) StopTimesData() error {
 
 	}
 
-	// // var currentRoute = -1
-	// // var routeRec *models.Route
-	// // for i, rec := range routeData {
-	// // 	if i == 0 {
-	// // 		continue
-	// // 	}
-	// // 	var routeId, err = strconv.Atoi(strings.Trim(row[0], " "))
-	// // 	if err != nil {
-	// // 		return err
-	// // 	}
-	// // 	var tripId = row[2]
-	// // 	var routeStops []models.Route02
-
-	// // 	parts := strings.Split(row[1], "_")
-	// // 	sdc_code, err := strconv.Atoi(strings.Trim(parts[0], " "))
-	// // 	if err != nil {
-	// // 		return err
-	// // 	}
-	// // 	var stopCount int
-	// // 	if currentRoute != routeId {
-	// // 		currentRoute = routeId
-	// // 		routeRec, err = s.routeSrv.RouteSelect(int32(routeId))
-	// // 		if err != nil {
-	// // 			return err
-	// // 		}
-	// // 		routeStops, err = s.routeSrv.RouteStopList(int32(routeId))
-	// // 		if err != nil {
-	// // 			return err
-	// // 		}
-	// // 		stopCount = len(routeStops)
-	// // 	}
-	// // 	var direction int
-	// // 	if routeRec.RouteType == 1 {
-	// // 		direction = 1
-	// // 	} else {
-	// // 		direction = 0
-	// // 	}
-	// // 	schedTime, err := s.schedule01Srv.ScheduleTimeList(int(routeRec.LnCode), sdc_code, direction)
-	// // 	for _, recTime := range schedTime {
-	// // 		duration := time.Time(recTime.EndTime).Sub(time.Time(recTime.StartTime))
-	// // 		intervals := stopCount - 1
-	// // 		var timeSpace = duration.Seconds() / float64(intervals)
-	// // 		for k, stop := range routeStops {
-	// // 			result = append(result, StopTimesGTFS{
-	// // 				TripId:        tripId,
-	// // 				StopSeq:       strconv.Itoa(int(stop.Senu)),
-	// // 				StopId:        strconv.Itoa(int(stop.StpCode)),
-	// // 				ArrivalTime:   time.Time(recTime.StartTime).Add(time.Duration(k*int(timeSpace)) * time.Second).Format(timeLayout),
-	// // 				DepartureTime: time.Time(recTime.StartTime).Add(time.Duration(k*int(timeSpace)) * time.Second).Format(timeLayout),
-	// // 			})
-	// // 		}
-	// // 	}
-
-	// }
-
-	err = s.writeStopTimesFile(result)
 	if err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func convertToGTFSFormat(starTime time.Time, endTime time.Time, inTime time.Time) string {
+	var layout = "15:04:05"
+	hour := inTime.Hour()
+	if endTime.Before(starTime) && hour < 3 { // Assuming service runs until 03:00 AM max
+		// Add 24 to express time as "next day"
+		return fmt.Sprintf("%02d:%02d:%02d", hour+24, inTime.Minute(), inTime.Second())
+	}
+
+	return inTime.Format(layout)
 }
 
 func (s *tripPlannerServiceImp) writeStopFile(stopRec []StopGTFS) error {
@@ -458,7 +459,7 @@ func (s *tripPlannerServiceImp) writeStopFile(stopRec []StopGTFS) error {
 func (s tripPlannerServiceImp) writeRouteFile(routeRecs []RouteGTFS) error {
 	// Define folder and file path
 	// folderPath := g
-	fileName := "route.txt"
+	fileName := "routes.txt"
 	fullPath := filepath.Join(s.gtfsFolder, fileName)
 
 	// Create folder if it doesn't exist
@@ -508,54 +509,54 @@ func (s tripPlannerServiceImp) writeCalendarFile(calRecs []CalendarGTFS) error {
 	return nil
 }
 
-func (s tripPlannerServiceImp) writeTripsFile(recs []TripGTFS) error {
-	// folderPath := "gtfs"
-	fileName := "trips.txt"
-	fullPath := filepath.Join(s.gtfsFolder, fileName)
+func (s tripPlannerServiceImp) writeTripsFile(file *os.File, rec TripGTFS) {
+	// // folderPath := "gtfs"
+	// fileName := "trips.txt"
+	// fullPath := filepath.Join(s.gtfsFolder, fileName)
 
-	// Create folder if it doesn't exist
-	err := os.MkdirAll(s.gtfsFolder, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	// Create or truncate the file
-	file, err := os.Create(fullPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+	// // Create folder if it doesn't exist
+	// err := os.MkdirAll(s.gtfsFolder, os.ModePerm)
+	// if err != nil {
+	// 	return err
+	// }
+	// // Create or truncate the file
+	// file, err := os.Create(fullPath)
+	// if err != nil {
+	// 	return err
+	// }
+	// defer file.Close()
 
-	// Write string to the file
-	writeLine(file, "route_id,service_id,trip_id,trip_headsign")
-	for _, rec := range recs {
-		writeLine(file, fmt.Sprintf("%d, %s, %s, %s", rec.RouteId, rec.ServiceId, rec.TripId, rec.TripHead))
-	}
-	return nil
+	// // Write string to the file
+	// writeLine(file, "route_id,service_id,trip_id,trip_headsign")
+	// for _, rec := range recs {
+	// 	writeLine(file, fmt.Sprintf("%d, %s, %s, %s", rec.RouteId, rec.ServiceId, rec.TripId, rec.TripHead))
+	// }
+	writeLine(file, fmt.Sprintf("%d, %s, %s, %s", rec.RouteId, rec.ServiceId, rec.TripId, rec.TripHead))
 }
 
-func (s *tripPlannerServiceImp) writeStopTimesFile(recs []StopTimesGTFS) error {
+func (s *tripPlannerServiceImp) writeStopTimesFile(file *os.File, rec StopTimesGTFS) {
 	// folderPath := "gtfs"
-	fileName := "stop_times.txt"
-	fullPath := filepath.Join(s.gtfsFolder, fileName)
+	// fileName := "stop_times.txt"
+	// fullPath := filepath.Join(s.gtfsFolder, fileName)
 
-	// Create folder if it doesn't exist
-	err := os.MkdirAll(s.gtfsFolder, os.ModePerm)
-	if err != nil {
-		return err
-	}
-	// Create or truncate the file
-	file, err := os.Create(fullPath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+	// // Create folder if it doesn't exist
+	// err := os.MkdirAll(s.gtfsFolder, os.ModePerm)
+	// if err != nil {
+	// 	return err
+	// }
+	// // Create or truncate the file
+	// file, err := os.Create(fullPath)
+	// if err != nil {
+	// 	return err
+	// }
+	// defer file.Close()
 
 	// Write string to the file
-	writeLine(file, "trip_id,arrival_time,departure_time,stop_id,stop_sequence")
-	for _, rec := range recs {
-		writeLine(file, fmt.Sprintf("%s, %s, %s, %s, %s", rec.TripId, rec.ArrivalTime, rec.DepartureTime, rec.StopId, rec.StopSeq))
-	}
-	return nil
+	// writeLine(file, "trip_id,arrival_time,departure_time,stop_id,stop_sequence")
+	// for _, rec := range recs {
+	// 	writeLine(file, fmt.Sprintf("%s, %s, %s, %s, %s", rec.TripId, rec.ArrivalTime, rec.DepartureTime, rec.StopId, rec.StopSeq))
+	// }
+	writeLine(file, fmt.Sprintf("%s, %s, %s, %s, %s", rec.TripId, rec.ArrivalTime, rec.DepartureTime, rec.StopId, rec.StopSeq))
 }
 
 func writeLine(f *os.File, line string) {
