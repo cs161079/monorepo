@@ -214,7 +214,7 @@ func (c *extApiControllerImpl) getSchedule(ctx *gin.Context) {
 		return
 	}
 
-	scheduleRecs, err := c.scheduleSrv.ScheduleMasterDistinct(*line_code)
+	scheduleRecs, err := c.scheduleSrv.ScheduleTimeListByLineCode(*line_code, int(*direction))
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Internal Error on Database query for Master Schedule."})
 	}
@@ -238,9 +238,11 @@ func (c *extApiControllerImpl) getSchedule(ctx *gin.Context) {
 }
 
 type BusCapacityRequest struct {
-	Capacity   int32     `json:"capacity"`
-	Passengers int32     `json:"passengers"`
-	Time       time.Time `json:"time"`
+	Capacity   int32           `json:"capacity"`
+	Passengers int32           `json:"passengers"`
+	Time       time.Time       `json:"time"`
+	SdcCode    int32           `json:"sdc_code"`
+	StartTime  models.OpswTime `json:"start_time"`
 }
 
 type LineExtDto struct {
